@@ -1,0 +1,45 @@
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lapak-app
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    container_name: lapak-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: lapak
+      MYSQL_USER: lapak_user
+      MYSQL_PASSWORD: lapak_dev_password
+      MYSQL_ROOT_PASSWORD: lapak_root_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - lapak_mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        - -u
+        - root
+        - -plapak_root_password
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  lapak_mysql_data:
