@@ -8,3 +8,4 @@ pest()
     ->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
