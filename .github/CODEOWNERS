@@ -1,0 +1,53 @@
+# Pemilik berkas otomatis diminta meninjau setiap PR yang menyentuh berkasnya.
+# Berkas ini hanya disunting integrator, pada unggahan pembuka tiap sesi.
+
+# D1 Identitas dan Sesi (Prima)
+/app/Models/Pengguna.php @primahadiramadhan03-ship-it
+/routes/api/identitas.php @primahadiramadhan03-ship-it
+/tests/Feature/Identitas/ @primahadiramadhan03-ship-it
+/config/auth.php @primahadiramadhan03-ship-it
+
+# D2 Toko dan Katalog (Syafiq)
+/app/Models/Toko.php @Syafiq-web
+/app/Models/Kategori.php @Syafiq-web
+/app/Models/Produk.php @Syafiq-web
+/routes/api/katalog.php @Syafiq-web
+/tests/Feature/Katalog/ @Syafiq-web
+
+# D3 Keranjang dan Pesanan (Brili)
+/app/Domain/ @Ramadana-Brilliant-Jaya
+/app/Models/Keranjang.php @Ramadana-Brilliant-Jaya
+/app/Models/ButirKeranjang.php @Ramadana-Brilliant-Jaya
+/routes/api/belanja.php @Ramadana-Brilliant-Jaya
+/tests/Feature/Belanja/ @Ramadana-Brilliant-Jaya
+
+# D4 Pembayaran dan Saldo (Risa - KAMU)
+/app/Models/Dompet.php @risayulia
+/app/Models/MutasiSaldo.php @risayulia
+/app/Services/BukuBesar.php @risayulia
+/app/Console/Commands/PeriksaBuku.php @risayulia
+/tests/Feature/Dompet/ @risayulia
+/database/migrations/*_4000*.php @risayulia
+
+# D5 Otorisasi, Audit, dan Kualitas (Jaya)
+/app/Exceptions/ @Sultanil
+/app/Http/Concerns/ @Sultanil
+/app/Http/Middleware/ @Sultanil
+/bootstrap/app.php @Sultanil
+/app/Providers/ @Sultanil
+/routes/api.php @Sultanil
+/config/lapak.php @Sultanil
+/composer.json @Sultanil
+/.github/ @Sultanil
+/docs/KONTRAK-API.md @Sultanil
+/tests/Feature/Sistem/ @Sultanil
+
+# Seeder bersama
+/database/seeders/DatabaseSeeder.php @Sultanil
+
+# Log AI (satu berkas per anggota)
+/docs/log-ai/prima.md @primahadiramadhan03-ship-it
+/docs/log-ai/syafiq.md @Syafiq-web
+/docs/log-ai/brili.md @Ramadana-Brilliant-Jaya
+/docs/log-ai/risa.md @risayulia
+/docs/log-ai/jaya.md @Sultanil
