@@ -18,7 +18,7 @@ final class Toko extends Model
 
     protected $table = 'toko';
 
-    protected $fillable = ['nama', 'slug', 'kota', 'deskripsi', 'ongkir_rupiah'];
+    protected $fillable = ['nama', 'slug', 'kota', 'deskripsi', 'ongkir_rupiah', 'pemilik_id', 'status'];
 
     protected function casts(): array
     {
