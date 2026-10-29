@@ -21,6 +21,7 @@ final readonly class RincianToko
         public Uang $subtotal,
         public Uang $ongkir,
         public Uang $komisi,
+        public int $beratTotalGram,
     ) {}
 
     /** Yang dibayar pembeli untuk toko ini. */

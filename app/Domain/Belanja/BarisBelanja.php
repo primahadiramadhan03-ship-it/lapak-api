@@ -15,6 +15,7 @@ final readonly class BarisBelanja
         public int $tokoId,
         public Uang $hargaSatuan,
         public int $kuantitas,
+        public int $beratGram, // Tambahan properti berat
     ) {
         if ($kuantitas < 1) {
             throw new InvalidArgumentException('Kuantitas minimal 1.');
@@ -24,5 +25,11 @@ final readonly class BarisBelanja
     public function subtotal(): Uang
     {
         return $this->hargaSatuan->kali($this->kuantitas);
+    }
+
+    // Tambahan metode hitung berat
+    public function subtotalBerat(): int
+    {
+        return $this->beratGram * $this->kuantitas;
     }
 }

@@ -26,6 +26,7 @@ final class RincianTokoResource extends JsonResource
                 'subtotal' => $baris->subtotal(),
             ], $this->baris),
             'subtotal' => $this->subtotal,
+            'berat_total_gram' => $this->beratTotalGram,
             'ongkir' => $this->ongkir,
             'total' => $this->total(),
         ];

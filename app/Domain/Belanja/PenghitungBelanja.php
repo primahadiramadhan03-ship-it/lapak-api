@@ -40,6 +40,12 @@ final readonly class PenghitungBelanja
                 Uang::nol(),
             );
 
+            $beratTotal = array_reduce(
+                $barisToko,
+                fn (int $jumlah, BarisBelanja $butir) => $jumlah + $butir->subtotalBerat(),
+                0,
+            );
+
             $rincian[] = new RincianToko(
                 tokoId: $tokoId,
                 namaToko: $toko[$tokoId]['nama'],
@@ -47,6 +53,7 @@ final readonly class PenghitungBelanja
                 subtotal: $subtotal,
                 ongkir: $toko[$tokoId]['ongkir'],
                 komisi: $subtotal->persen($this->komisiPersen),
+                beratTotalGram: $beratTotal,
             );
         }
 

@@ -11,10 +11,6 @@ use App\Domain\Uang;
 use App\Exceptions\ProdukTidakDapatDibeli;
 use App\Models\Produk;
 
-/**
- * Jembatan antara basis data dan rumus murni: mengambil harga dan stok TERKINI dari server,
- * lalu menyerahkannya ke PenghitungBelanja. Klien hanya menyebut produk dan kuantitas (LP-6).
- */
 final class PenyusunBelanja
 {
     /**
@@ -55,6 +51,7 @@ final class PenyusunBelanja
                 tokoId: $barang->toko_id,
                 hargaSatuan: Uang::dari($barang->harga_rupiah),
                 kuantitas: $kuantitas,
+                beratGram: $barang->berat_gram,
             );
 
             $toko[$barang->toko_id] = [
