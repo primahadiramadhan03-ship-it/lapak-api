@@ -31,7 +31,7 @@ final class BukuBesar
         }
 
         // LP-13: Cek saldo dompet asal (kecuali dompet eksternal boleh negatif)
-        if (!$asal->jenis->bolehNegatif() && $asal->saldo_rupiah < $jumlahRupiah) {
+        if (! $asal->jenis->bolehNegatif() && $asal->saldo_rupiah < $jumlahRupiah) {
             throw new SaldoTidakCukup($asal->saldo_rupiah, $jumlahRupiah);
         }
 
@@ -65,8 +65,8 @@ final class BukuBesar
                 $rujukan,
                 $keterangan
             );
-            
-           // Update saldo kedua dompet melalui method ubahSaldo()
+
+            // Update saldo kedua dompet melalui method ubahSaldo()
             $asal->ubahSaldo($asal->saldo_rupiah - $jumlahRupiah);
             $tujuan->ubahSaldo($tujuan->saldo_rupiah + $jumlahRupiah);
         });
@@ -79,6 +79,7 @@ final class BukuBesar
     public function periksaKeseimbangan(): bool
     {
         $total = MutasiSaldo::sum('jumlah_rupiah');
+
         return $total === 0;
     }
 }

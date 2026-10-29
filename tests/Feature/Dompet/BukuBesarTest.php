@@ -19,13 +19,15 @@ final class BukuBesarTest extends TestCase
     use RefreshDatabase;
 
     private BukuBesar $bukuBesar;
+
     private Dompet $dompetA;
+
     private Dompet $dompetB;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->bukuBesar = new BukuBesar();
+        $this->bukuBesar = new BukuBesar;
 
         // Buat 2 dompet untuk testing
         $this->dompetA = Dompet::buat('penjual:1', JenisDompet::Penjual, 100000);
@@ -111,8 +113,6 @@ final class BukuBesarTest extends TestCase
         );
     }
 
-   
-
     public function test_update_dompet_melemper_exception(): void
     {
         $this->expectException(LogicException::class);
@@ -129,4 +129,4 @@ final class BukuBesarTest extends TestCase
         // LP-13: Delete dompet harus ditolak
         $this->dompetA->delete();
     }
-} 
+}
