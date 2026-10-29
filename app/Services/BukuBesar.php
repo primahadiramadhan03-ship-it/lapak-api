@@ -30,45 +30,52 @@ final class BukuBesar
             throw new \InvalidArgumentException('Jumlah harus positif.');
         }
 
-        // LP-13: Cek saldo dompet asal (kecuali dompet eksternal boleh negatif)
-        if (! $asal->jenis->bolehNegatif() && $asal->saldo_rupiah < $jumlahRupiah) {
-            throw new SaldoTidakCukup($asal->saldo_rupiah, $jumlahRupiah);
-        }
-
         // LP-13: Gunakan transaksi database untuk atomicity
         DB::transaction(function () use ($asal, $tujuan, $jumlahRupiah, $jenis, $rujukan, $keterangan) {
-            // Kunci baris untuk mencegah race condition
-            $asal->lockForUpdate();
-            $tujuan->lockForUpdate();
+            // LP-13: Ambil ulang dan kunci baris urut id menaik agar tidak deadlock.
+            // lockForUpdate() pada model yang sudah dimuat tidak mengunci apa pun.
+            $dompet = Dompet::whereKey([$asal->id, $tujuan->id])
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $asalTerkunci = $dompet->get($asal->id);
+            $tujuanTerkunci = $dompet->get($tujuan->id);
+
+            // LP-13: Cek saldo setelah baris terkunci (dompet eksternal boleh negatif)
+            if (! $asalTerkunci->jenis->bolehNegatif() && $asalTerkunci->saldo_rupiah < $jumlahRupiah) {
+                throw new SaldoTidakCukup($asalTerkunci->saldo_rupiah, $jumlahRupiah);
+            }
 
             // Kelompok mutasi (UUID untuk mengelompokkan pasangan)
             $kelompok = Str::uuid()->toString();
 
             // Mutasi 1: Keluar dari dompet asal (negatif)
             MutasiSaldo::buat(
-                $asal->id,
+                $asalTerkunci->id,
                 $kelompok,
                 $jenis,
                 -$jumlahRupiah,
-                $asal->saldo_rupiah - $jumlahRupiah,
+                $asalTerkunci->saldo_rupiah - $jumlahRupiah,
                 $rujukan,
                 $keterangan
             );
 
             // Mutasi 2: Masuk ke dompet tujuan (positif)
             MutasiSaldo::buat(
-                $tujuan->id,
+                $tujuanTerkunci->id,
                 $kelompok,
                 $jenis,
                 $jumlahRupiah,
-                $tujuan->saldo_rupiah + $jumlahRupiah,
+                $tujuanTerkunci->saldo_rupiah + $jumlahRupiah,
                 $rujukan,
                 $keterangan
             );
 
             // Update saldo kedua dompet melalui method ubahSaldo()
-            $asal->ubahSaldo($asal->saldo_rupiah - $jumlahRupiah);
-            $tujuan->ubahSaldo($tujuan->saldo_rupiah + $jumlahRupiah);
+            $asalTerkunci->ubahSaldo($asalTerkunci->saldo_rupiah - $jumlahRupiah);
+            $tujuanTerkunci->ubahSaldo($tujuanTerkunci->saldo_rupiah + $jumlahRupiah);
         });
     }
 
