@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
+use App\Exceptions\GalatDomain;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,8 +14,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (ValidationException $e) {
+            return response()->json([
+                'galat' => [
+                    'kode' => 'VALIDASI',
+                    'rincian' => $e->errors(),
+                ],
+            ], 422);
+        });
+
+        $exceptions->render(function (GalatDomain $e) {
+            return response()->json([
+                'galat' => [
+                    'kode' => $e->kode,
+                    'rincian' => $e->rincian,
+                ],
+            ], $e->statusHttp);
+        });
     })->create();
