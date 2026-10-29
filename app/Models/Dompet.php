@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\JenisDompet;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 final class Dompet extends Model
 {
@@ -14,6 +15,9 @@ final class Dompet extends Model
 
     // Sengaja kosong: dompet hanya dibuat/diubah oleh Service BukuBesar, bukan input klien
     protected $fillable = [];
+
+    // Flag privat untuk mengizinkan update saldo sementara dari method ubahSaldo()
+    private bool $bolehUbahSaldo = false;
 
     protected function casts(): array
     {
@@ -29,17 +33,47 @@ final class Dompet extends Model
     }
 
     /**
+     * LP-13: Proteksi agar dompet tidak bisa dihapus.
+     */
+    protected static function booted(): void
+    {
+        self::deleting(fn() => throw new LogicException('LP-13: dompet tidak boleh dihapus.'));
+
+        self::updating(function (self $dompet) {
+            // Jika yang diubah hanya saldo_rupiah DAN flag tidak aktif → tolak
+            if ($dompet->isDirty('saldo_rupiah') && !$dompet->bolehUbahSaldo) {
+                throw new LogicException('LP-13: saldo dompet hanya boleh diubah melalui method ubahSaldo().');
+            }
+        });
+    }
+
+    /**
+     * LP-13: Method khusus untuk mengubah saldo dompet.
+     * Hanya boleh dipanggil dari dalam kode (service BukuBesar), bukan dari input klien.
+     */
+    public function ubahSaldo(int $saldoBaru): void
+    {
+        // Cek aturan LP-13: hanya dompet eksternal yang boleh negatif
+        if (!$this->jenis->bolehNegatif() && $saldoBaru < 0) {
+            throw new LogicException('LP-13: dompet ' . $this->jenis->value . ' tidak boleh bersaldo negatif.');
+        }
+
+        $this->bolehUbahSaldo = true;
+        $this->saldo_rupiah = $saldoBaru;
+        $this->save();
+        $this->bolehUbahSaldo = false;
+    }
+
+    /**
      * LP-13: Method khusus untuk membuat dompet baru tanpa mass assignment.
-     * Hanya boleh dipanggil dari dalam kode (seeder, service), bukan dari input klien.
      */
     public static function buat(string $kode, JenisDompet $jenis, int $saldo = 0): self
     {
-        $dompet = new self;
+        $dompet = new self();
         $dompet->kode = $kode;
         $dompet->jenis = $jenis;
         $dompet->saldo_rupiah = $saldo;
         $dompet->save();
-
         return $dompet;
     }
 }

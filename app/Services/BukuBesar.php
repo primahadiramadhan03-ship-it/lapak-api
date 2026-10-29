@@ -65,13 +65,10 @@ final class BukuBesar
                 $rujukan,
                 $keterangan
             );
-
-            // Update saldo kedua dompet (TANPA mass assignment)
-            $asal->saldo_rupiah = $asal->saldo_rupiah - $jumlahRupiah;
-            $asal->save();
-
-            $tujuan->saldo_rupiah = $tujuan->saldo_rupiah + $jumlahRupiah;
-            $tujuan->save();
+            
+           // Update saldo kedua dompet melalui method ubahSaldo()
+            $asal->ubahSaldo($asal->saldo_rupiah - $jumlahRupiah);
+            $tujuan->ubahSaldo($tujuan->saldo_rupiah + $jumlahRupiah);
         });
     }
 

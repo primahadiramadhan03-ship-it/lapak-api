@@ -11,6 +11,7 @@ use App\Models\Dompet;
 use App\Models\MutasiSaldo;
 use App\Services\BukuBesar;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use LogicException; // ← TAMBAHKAN INI DI BAGIAN ATAS
 use Tests\TestCase;
 
 final class BukuBesarTest extends TestCase
@@ -18,15 +19,13 @@ final class BukuBesarTest extends TestCase
     use RefreshDatabase;
 
     private BukuBesar $bukuBesar;
-
     private Dompet $dompetA;
-
     private Dompet $dompetB;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->bukuBesar = new BukuBesar;
+        $this->bukuBesar = new BukuBesar();
 
         // Buat 2 dompet untuk testing
         $this->dompetA = Dompet::buat('penjual:1', JenisDompet::Penjual, 100000);
@@ -44,20 +43,15 @@ final class BukuBesarTest extends TestCase
             'Transfer test'
         );
 
-        // Refresh dari database
         $this->dompetA->refresh();
         $this->dompetB->refresh();
 
-        // LP-13: Saldo dompet A berkurang
         $this->assertEquals(70000, $this->dompetA->saldo_rupiah);
-        // LP-13: Saldo dompet B bertambah
         $this->assertEquals(80000, $this->dompetB->saldo_rupiah);
 
-        // LP-13: Ada 2 mutasi yang tercipta
         $mutasi = MutasiSaldo::where('rujukan', 'TEST-001')->get();
         $this->assertCount(2, $mutasi);
 
-        // LP-13: Jumlah mutasi harus nol (satu negatif, satu positif)
         $total = $mutasi->sum('jumlah_rupiah');
         $this->assertEquals(0, $total);
     }
@@ -69,7 +63,7 @@ final class BukuBesarTest extends TestCase
         $this->bukuBesar->pindahkan(
             $this->dompetA,
             $this->dompetB,
-            200000, // Lebih besar dari saldo 100000
+            200000,
             JenisMutasi::DanaMasuk,
             'TEST-002'
         );
@@ -77,10 +71,8 @@ final class BukuBesarTest extends TestCase
 
     public function test_dompet_eksternal_boleh_negatif(): void
     {
-        // Buat dompet eksternal
         $dompetEksternal = Dompet::buat('eksternal', JenisDompet::Eksternal, 0);
 
-        // LP-13: Dompet eksternal boleh negatif
         $this->bukuBesar->pindahkan(
             $dompetEksternal,
             $this->dompetA,
@@ -95,7 +87,6 @@ final class BukuBesarTest extends TestCase
 
     public function test_periksa_keseimbangan_buku_besar(): void
     {
-        // Pindahkan saldo
         $this->bukuBesar->pindahkan(
             $this->dompetA,
             $this->dompetB,
@@ -104,7 +95,6 @@ final class BukuBesarTest extends TestCase
             'TEST-004'
         );
 
-        // LP-13: Buku besar harus seimbang
         $this->assertTrue($this->bukuBesar->periksaKeseimbangan());
     }
 
@@ -115,9 +105,28 @@ final class BukuBesarTest extends TestCase
         $this->bukuBesar->pindahkan(
             $this->dompetA,
             $this->dompetB,
-            -10000, // Negatif tidak diperbolehkan
+            -10000,
             JenisMutasi::DanaMasuk,
             'TEST-005'
         );
     }
-}
+
+   
+
+    public function test_update_dompet_melemper_exception(): void
+    {
+        $this->expectException(LogicException::class);
+
+        // LP-13: Update langsung saldo dompet harus ditolak
+        $this->dompetA->saldo_rupiah = 999999;
+        $this->dompetA->save();
+    }
+
+    public function test_delete_dompet_melemper_exception(): void
+    {
+        $this->expectException(LogicException::class);
+
+        // LP-13: Delete dompet harus ditolak
+        $this->dompetA->delete();
+    }
+} 
