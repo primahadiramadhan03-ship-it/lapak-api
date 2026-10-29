@@ -37,4 +37,30 @@ final class MutasiSaldo extends Model
     {
         return $this->belongsTo(Dompet::class, 'dompet_id');
     }
+
+    /**
+     * LP-13: Method khusus untuk membuat mutasi baru tanpa mass assignment.
+     * Hanya boleh dipanggil dari dalam kode (service BukuBesar), bukan dari input klien.
+     */
+    public static function buat(
+        int $dompetId,
+        string $kelompok,
+        JenisMutasi $jenis,
+        int $jumlahRupiah,
+        int $saldoSetelah,
+        string $rujukan,
+        ?string $keterangan = null
+    ): self {
+        $mutasi = new self;
+        $mutasi->dompet_id = $dompetId;
+        $mutasi->kelompok = $kelompok;
+        $mutasi->jenis = $jenis;
+        $mutasi->jumlah_rupiah = $jumlahRupiah;
+        $mutasi->saldo_setelah = $saldoSetelah;
+        $mutasi->rujukan = $rujukan;
+        $mutasi->keterangan = $keterangan;
+        $mutasi->save();
+
+        return $mutasi;
+    }
 }
