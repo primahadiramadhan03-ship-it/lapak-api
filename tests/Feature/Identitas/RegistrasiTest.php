@@ -94,3 +94,22 @@ it('menolak konfirmasi kata sandi yang tidak cocok', function () {
         'konfirmasi_kata_sandi' => 'KataSandiBerbeda123',
     ]))->assertUnprocessable();
 });
+
+it('mengembalikan amplop respons yang sesuai kontrak', function () {
+    $this->postJson('/api/v1/registrasi', dataRegistrasi())
+        ->assertCreated()
+        ->assertJsonStructure([
+            'sukses',
+            'data' => [
+                'id',
+                'nama',
+                'surel',
+                'telepon',
+                'status',
+                'terdaftar_pada',
+            ],
+            'meta',
+        ])
+        ->assertJsonPath('sukses', true)
+        ->assertJsonPath('data.status', 'aktif');
+});
