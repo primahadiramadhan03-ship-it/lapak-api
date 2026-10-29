@@ -37,11 +37,11 @@ final class Dompet extends Model
      */
     protected static function booted(): void
     {
-        self::deleting(fn() => throw new LogicException('LP-13: dompet tidak boleh dihapus.'));
+        self::deleting(fn () => throw new LogicException('LP-13: dompet tidak boleh dihapus.'));
 
         self::updating(function (self $dompet) {
             // Jika yang diubah hanya saldo_rupiah DAN flag tidak aktif → tolak
-            if ($dompet->isDirty('saldo_rupiah') && !$dompet->bolehUbahSaldo) {
+            if ($dompet->isDirty('saldo_rupiah') && ! $dompet->bolehUbahSaldo) {
                 throw new LogicException('LP-13: saldo dompet hanya boleh diubah melalui method ubahSaldo().');
             }
         });
@@ -54,8 +54,8 @@ final class Dompet extends Model
     public function ubahSaldo(int $saldoBaru): void
     {
         // Cek aturan LP-13: hanya dompet eksternal yang boleh negatif
-        if (!$this->jenis->bolehNegatif() && $saldoBaru < 0) {
-            throw new LogicException('LP-13: dompet ' . $this->jenis->value . ' tidak boleh bersaldo negatif.');
+        if (! $this->jenis->bolehNegatif() && $saldoBaru < 0) {
+            throw new LogicException('LP-13: dompet '.$this->jenis->value.' tidak boleh bersaldo negatif.');
         }
 
         $this->bolehUbahSaldo = true;
@@ -69,11 +69,12 @@ final class Dompet extends Model
      */
     public static function buat(string $kode, JenisDompet $jenis, int $saldo = 0): self
     {
-        $dompet = new self();
+        $dompet = new self;
         $dompet->kode = $kode;
         $dompet->jenis = $jenis;
         $dompet->saldo_rupiah = $saldo;
         $dompet->save();
+
         return $dompet;
     }
 }
