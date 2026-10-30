@@ -21,7 +21,7 @@ final class ProdukResource extends JsonResource
             'slug' => $this->slug,
             'deskripsi' => $this->deskripsi,
             'harga_rupiah' => $this->harga_rupiah,
-            'harga' => 'Rp ' . number_format($this->harga_rupiah, 0, ',', '.'),
+            'harga' => 'Rp '.number_format($this->harga_rupiah, 0, ',', '.'),
             'stok' => $this->stok,
             'berat_gram' => $this->berat_gram,
             'status' => $this->status->value,

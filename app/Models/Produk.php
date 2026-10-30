@@ -68,7 +68,7 @@ final class Produk extends Model
             $cariEscaped = addcslashes($cari, '%_');
             $kueri->where(function (Builder $q) use ($cariEscaped): void {
                 $q->where('produk.nama', 'like', "%{$cariEscaped}%")
-                  ->orWhere('produk.deskripsi', 'like', "%{$cariEscaped}%");
+                    ->orWhere('produk.deskripsi', 'like', "%{$cariEscaped}%");
             });
         }
 

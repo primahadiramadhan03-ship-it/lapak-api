@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Models\Kategori;
-use App\Models\Produk;
-use App\Models\Toko;
-use App\Models\Pengguna;
 use App\Enums\StatusAkun;
 use App\Enums\StatusProduk;
 use App\Enums\StatusToko;
+use App\Models\Kategori;
+use App\Models\Pengguna;
+use App\Models\Produk;
+use App\Models\Toko;
+
 use function Pest\Laravel\get;
 use function Pest\Laravel\getJson;
 

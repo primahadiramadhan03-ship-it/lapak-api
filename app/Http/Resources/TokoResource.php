@@ -22,7 +22,7 @@ final class TokoResource extends JsonResource
             'kota' => $this->kota,
             'deskripsi' => $this->deskripsi,
             'ongkir_rupiah' => $this->ongkir_rupiah,
-            'ongkir' => 'Rp ' . number_format($this->ongkir_rupiah, 0, ',', '.'),
+            'ongkir' => 'Rp '.number_format($this->ongkir_rupiah, 0, ',', '.'),
             'status' => $this->status->value,
             'pemilik' => PenggunaResource::make($this->whenLoaded('pemilik')),
             'produk' => ProdukResource::collection($this->whenLoaded('produk')),

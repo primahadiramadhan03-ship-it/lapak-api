@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\Kategori;
+use App\Models\Pengguna;
 use App\Models\Produk;
 use App\Models\Toko;
-use App\Models\Pengguna;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 final class KatalogSeeder extends Seeder
 {
-    /**
-     * @return void
-     */
     public function run(): void
     {
         $kategori = Kategori::factory()->count(5)->create();
