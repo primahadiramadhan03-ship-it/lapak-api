@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'komisi_persen' => env('LAPAK_KOMISI', 5),
+    'komisi' => (int) env('LAPAK_KOMISI', 5),
+    'komisi_persen' => (int) env('LAPAK_KOMISI', 5),
     'batas_waktu_bayar_menit' => env('LAPAK_BATAS_WAKTU_BAYAR_MENIT', 15),
     'lama_tahan_hari' => env('LAPAK_LAMA_TAHAN_HARI', 3),
     'minimal_pencairan' => env('LAPAK_MINIMAL_PENCAIRAN', 10000),

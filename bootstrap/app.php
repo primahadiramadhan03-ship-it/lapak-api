@@ -18,5 +18,5 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [PaksaJson::class, IdPermintaan::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        PenanganGalatApi::daftarkan($exceptions);
+        $exceptions->render(PenanganGalatApi::tangani(...));
     })->create();
