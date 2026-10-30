@@ -56,4 +56,53 @@ final class Produk extends Model
         $kueri->where('produk.status', StatusProduk::Aktif)
             ->whereHas('toko', fn (Builder $toko) => $toko->where('status', StatusToko::Aktif));
     }
+
+    /**
+     * LP-4: filter pencarian aman. Hanya kolom yang ada di daftar putih yang boleh diurutkan.
+     *
+     * @param  Builder<Produk>  $kueri
+     */
+    public function scopeSaring(Builder $kueri, ?string $cari, ?string $kategori, ?int $hargaMin, ?int $hargaMax): void
+    {
+        if ($cari !== null && $cari !== '') {
+            $cariEscaped = addcslashes($cari, '%_');
+            $kueri->where(function (Builder $q) use ($cariEscaped): void {
+                $q->where('produk.nama', 'like', "%{$cariEscaped}%")
+                    ->orWhere('produk.deskripsi', 'like', "%{$cariEscaped}%");
+            });
+        }
+
+        if ($kategori !== null && $kategori !== '') {
+            $kueri->whereHas('kategori', fn (Builder $q) => $q->where('kategori.slug', $kategori));
+        }
+
+        if ($hargaMin !== null) {
+            $kueri->where('produk.harga_rupiah', '>=', $hargaMin);
+        }
+
+        if ($hargaMax !== null) {
+            $kueri->where('produk.harga_rupiah', '<=', $hargaMax);
+        }
+    }
+
+    /**
+     * LP-4: pengurutan berbasis daftar putih. Kolom yang tidak diizinkan diabaikan.
+     *
+     * @param  Builder<Produk>  $kueri
+     */
+    public function scopeUrut(Builder $kueri, ?string $urut, string $arah): void
+    {
+        $daftarPutih = [
+            'nama' => 'produk.nama',
+            'harga' => 'produk.harga_rupiah',
+            'terbaru' => 'produk.created_at',
+            'stok' => 'produk.stok',
+        ];
+
+        if ($urut !== null && isset($daftarPutih[$urut])) {
+            $kolom = $daftarPutih[$urut];
+            $arahValid = strtolower($arah) === 'desc' ? 'desc' : 'asc';
+            $kueri->orderBy($kolom, $arahValid);
+        }
+    }
 }
