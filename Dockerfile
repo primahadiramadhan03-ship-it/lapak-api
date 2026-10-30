@@ -1,4 +1,3 @@
-
 FROM php:8.3-cli
 
 RUN apt-get update && apt-get install -y \
@@ -7,14 +6,16 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libicu-dev \
     libonig-dev \
+    libsqlite3-dev \
     default-mysql-client \
     && docker-php-ext-install \
-    pdo_mysql \
-    mbstring \
-    bcmath \
-    intl \
-    zip \
-    pcntl \
+        pdo_mysql \
+        pdo_sqlite \
+        mbstring \
+        bcmath \
+        intl \
+        zip \
+        pcntl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
