@@ -14,7 +14,7 @@ use App\Models\Produk;
 final class PenyusunBelanja
 {
     /**
-     * @param list<array{produk_id: int, kuantitas: int}> $butir
+     * @param  list<array{produk_id: int, kuantitas: int}>  $butir
      * @return list<RincianToko>
      */
     public function susun(array $butir): array

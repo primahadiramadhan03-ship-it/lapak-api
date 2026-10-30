@@ -26,7 +26,7 @@ it('menghitung total dari harga di server', function () {
 
 it('mengabaikan harga dan total yang dikirim klien (LP-6)', function () {
     $curang = ['produk_id' => $this->kain->id, 'kuantitas' => 2, 'harga_satuan' => 1, 'subtotal' => 2];
-    
+
     ($this->simulasi)([$curang], ['total_bayar' => 2])
         ->assertOk()
         ->assertJsonPath('data.pesanan.0.baris.0.harga_satuan', 185_000)
@@ -48,7 +48,7 @@ it('memecah belanja lintas toko menjadi beberapa pesanan (LP-7)', function () {
 
 it('menolak produk yang tidak tampil tanpa membedakan alasannya (LP-4)', function () {
     $draf = Produk::factory()->for($this->batik)->draf()->create();
-    
+
     ($this->simulasi)([
         ['produk_id' => $draf->id, 'kuantitas' => 1],
         ['produk_id' => 999_999, 'kuantitas' => 1],

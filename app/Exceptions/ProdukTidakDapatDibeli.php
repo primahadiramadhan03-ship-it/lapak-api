@@ -7,7 +7,7 @@ namespace App\Exceptions;
 final class ProdukTidakDapatDibeli extends GalatDomain
 {
     /**
-     * @param list<int> $idProduk
+     * @param  list<int>  $idProduk
      */
     public static function tidakTampil(array $idProduk): self
     {

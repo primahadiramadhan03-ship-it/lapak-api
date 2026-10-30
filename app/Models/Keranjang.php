@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class Keranjang extends Model
 {
     protected $table = 'keranjang';
+
     protected $fillable = [];
 
     /** @return BelongsTo<Pengguna, $this> */
