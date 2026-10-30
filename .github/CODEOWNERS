@@ -12,7 +12,7 @@
 /app/Models/Kategori.php @Syafiq-web
 /app/Models/Produk.php @Syafiq-web
 /routes/api/katalog.php @Syafiq-web
-/tests/Feature/Katalog/ @Syafiq-web
+/tests/Feature/KatalogTest.php @Syafiq-web
 
 # D3 Keranjang dan Pesanan (Brili)
 /app/Domain/ @Ramadana-Brilliant-Jaya
@@ -51,3 +51,13 @@
 /docs/log-ai/brili.md @Ramadana-Brilliant-Jaya
 /docs/log-ai/risa.md @risayulia
 /docs/log-ai/jaya.md @Sultanil
+
+# Override kepemilikan khusus
+/app/Exceptions/ProdukTidakDapatDibeli.php @Ramadana-Brilliant-Jaya
+/app/Exceptions/SaldoTidakCukup.php @risayulia
+/docs/domain/D4-dompet.md @risayulia
+
+# Berkas yang dikelola integrator
+/.github/CODEOWNERS @primahadiramadhan03-ship-it
+/docs/ATURAN-BISNIS.md @primahadiramadhan03-ship-it
+/docs/sesi/ @primahadiramadhan03-ship-it
