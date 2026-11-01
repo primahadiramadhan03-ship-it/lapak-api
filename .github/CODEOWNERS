@@ -3,6 +3,12 @@
 
 # D1 Identitas dan Sesi (Prima)
 /app/Models/Pengguna.php @primahadiramadhan03-ship-it
+/app/Models/Sesi.php @primahadiramadhan03-ship-it
+/app/Services/PenerbitSesi.php @primahadiramadhan03-ship-it
+/app/Services/PemeriksaSesi.php @primahadiramadhan03-ship-it
+/app/Services/PemeriksaKataSandi.php @primahadiramadhan03-ship-it
+/app/Http/Controllers/MasukController.php @primahadiramadhan03-ship-it
+/app/Http/Controllers/SesiController.php @primahadiramadhan03-ship-it
 /routes/api/identitas.php @primahadiramadhan03-ship-it
 /tests/Feature/Identitas/ @primahadiramadhan03-ship-it
 /config/auth.php @primahadiramadhan03-ship-it
@@ -11,21 +17,27 @@
 /app/Models/Toko.php @Syafiq-web
 /app/Models/Kategori.php @Syafiq-web
 /app/Models/Produk.php @Syafiq-web
+/app/Http/Controllers/TokoSayaController.php @Syafiq-web
+/app/Http/Controllers/ProdukSayaController.php @Syafiq-web
 /routes/api/katalog.php @Syafiq-web
 /tests/Feature/KatalogTest.php @Syafiq-web
 
 # D3 Keranjang dan Pesanan (Brili)
 /app/Domain/ @Ramadana-Brilliant-Jaya
+/app/Services/LayananKeranjang.php @Ramadana-Brilliant-Jaya
 /app/Models/Keranjang.php @Ramadana-Brilliant-Jaya
 /app/Models/ButirKeranjang.php @Ramadana-Brilliant-Jaya
+/app/Http/Controllers/KeranjangController.php @Ramadana-Brilliant-Jaya
 /routes/api/belanja.php @Ramadana-Brilliant-Jaya
 /tests/Feature/Belanja/ @Ramadana-Brilliant-Jaya
 
-# D4 Pembayaran dan Saldo (Risa - KAMU)
+# D4 Pembayaran dan Saldo (Risa)
 /app/Models/Dompet.php @risayulia
 /app/Models/MutasiSaldo.php @risayulia
 /app/Services/BukuBesar.php @risayulia
 /app/Console/Commands/PeriksaBuku.php @risayulia
+/app/Http/Controllers/DompetController.php @risayulia
+/routes/api/dompet.php @risayulia
 /tests/Feature/Dompet/ @risayulia
 /database/migrations/*_4000*.php @risayulia
 
@@ -36,11 +48,15 @@
 /bootstrap/app.php @Sultanil
 /app/Providers/ @Sultanil
 /routes/api.php @Sultanil
+/routes/console.php @Sultanil
 /config/lapak.php @Sultanil
 /composer.json @Sultanil
 /.github/ @Sultanil
 /docs/KONTRAK-API.md @Sultanil
+/tests/TestCase.php @Sultanil
+/tests/Pest.php @Sultanil
 /tests/Feature/Sistem/ @Sultanil
+/app/Console/Commands/PangkasSesi.php @Sultanil
 
 # Seeder bersama
 /database/seeders/DatabaseSeeder.php @Sultanil
@@ -58,6 +74,10 @@
 /docs/domain/D4-dompet.md @risayulia
 
 # Berkas yang dikelola integrator
-/.github/CODEOWNERS @primahadiramadhan03-ship-it
-/docs/ATURAN-BISNIS.md @primahadiramadhan03-ship-it
-/docs/sesi/ @primahadiramadhan03-ship-it
+/.github/CODEOWNERS @Syafiq-web
+/docs/ATURAN-BISNIS.md @Syafiq-web
+/docs/sesi/ @Syafiq-web
+
+# Pengecualian. Pada CODEOWNERS, pola yang cocok PALING AKHIR yang menang,
+# jadi pengecualian ditulis di bawah aturan umumnya.
+/app/Domain/Sesi/ @primahadiramadhan03-ship-it
