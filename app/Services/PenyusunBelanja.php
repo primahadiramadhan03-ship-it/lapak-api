@@ -4,20 +4,29 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Domain\Belanja\AlasanBermasalah;
 use App\Domain\Belanja\BarisBelanja;
+use App\Domain\Belanja\ButirBermasalah;
 use App\Domain\Belanja\PenghitungBelanja;
 use App\Domain\Belanja\RincianToko;
 use App\Domain\Uang;
 use App\Exceptions\ProdukTidakDapatDibeli;
 use App\Models\Produk;
 
+/**
+ * Jembatan antara basis data dan rumus murni: mengambil harga dan stok TERKINI dari server,
+ * lalu menyerahkannya ke PenghitungBelanja. Klien hanya menyebut produk dan kuantitas (LP-6).
+ */
 final class PenyusunBelanja
 {
     /**
+     * Memilah butir menjadi yang dapat dihitung dan yang bermasalah, tanpa melempar galat.
+     * Dipakai keranjang: isi keranjang bisa menjadi basi, dan membukanya tidak boleh gagal.
+     *
      * @param  list<array{produk_id: int, kuantitas: int}>  $butir
-     * @return list<RincianToko>
+     * @return array{0: list<RincianToko>, 1: list<ButirBermasalah>}
      */
-    public function susun(array $butir): array
+    public function pilah(array $butir): array
     {
         $diminta = collect($butir)->pluck('kuantitas', 'produk_id');
 
@@ -28,21 +37,27 @@ final class PenyusunBelanja
             ->get()
             ->keyBy('id');
 
-        $hilang = $diminta->keys()->diff($produk->keys())->values()->all();
-        if ($hilang !== []) {
-            throw ProdukTidakDapatDibeli::tidakTampil($hilang);
-        }
-
         $baris = [];
         $toko = [];
+        $bermasalah = [];
 
         foreach ($diminta as $produkId => $kuantitas) {
-            $barang = $produk[$produkId];
+            $barang = $produk[$produkId] ?? null;
+
+            if ($barang === null) {
+                $bermasalah[] = new ButirBermasalah(
+                    $produkId, $kuantitas, AlasanBermasalah::TidakTersedia,
+                );
+
+                continue;
+            }
 
             if ($barang->stok < $kuantitas) {
-                throw ProdukTidakDapatDibeli::stokKurang(
-                    $barang->id, $barang->nama, $kuantitas, $barang->stok,
+                $bermasalah[] = new ButirBermasalah(
+                    $produkId, $kuantitas, AlasanBermasalah::StokKurang, $barang->nama, $barang->stok,
                 );
+
+                continue;
             }
 
             $baris[] = new BarisBelanja(
@@ -60,6 +75,46 @@ final class PenyusunBelanja
             ];
         }
 
-        return (new PenghitungBelanja(config('lapak.komisi_persen')))->hitung($baris, $toko);
+        $rincian = $baris === []
+            ? []
+            : (new PenghitungBelanja(config('lapak.komisi_persen')))->hitung($baris, $toko);
+
+        return [$rincian, $bermasalah];
+    }
+
+    /**
+     * Versi tegas: satu butir bermasalah menggagalkan seluruhnya.
+     * Dipakai simulasi sekarang dan checkout pada Sesi 4.
+     *
+     * @param  list<array{produk_id: int, kuantitas: int}>  $butir
+     * @return list<RincianToko>
+     */
+    public function susun(array $butir): array
+    {
+        [$rincian, $bermasalah] = $this->pilah($butir);
+
+        $hilang = [];
+        foreach ($bermasalah as $masalah) {
+            if ($masalah->alasan === AlasanBermasalah::TidakTersedia) {
+                $hilang[] = $masalah->produkId;
+            }
+        }
+
+        if ($hilang !== []) {
+            throw ProdukTidakDapatDibeli::tidakTampil($hilang);
+        }
+
+        if ($bermasalah !== []) {
+            $masalah = reset($bermasalah);
+
+            throw ProdukTidakDapatDibeli::stokKurang(
+                $masalah->produkId,
+                (string) $masalah->namaProduk,
+                $masalah->kuantitas,
+                (int) $masalah->stokTersedia,
+            );
+        }
+
+        return $rincian;
     }
 }
