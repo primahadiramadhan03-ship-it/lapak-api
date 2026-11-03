@@ -53,7 +53,7 @@ final readonly class KunciSesi
         return hash('sha256', $this->rahasia);
     }
 
-    /** hash_equals membandingkan dalam waktu tetap. */
+    /** hash_equals membandingkan dalam waktu tetap, sehingga lamanya tidak membocorkan isi hash. */
     public function cocok(string $hashTersimpan): bool
     {
         return hash_equals($hashTersimpan, $this->hash());

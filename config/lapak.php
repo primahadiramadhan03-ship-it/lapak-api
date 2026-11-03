@@ -12,6 +12,7 @@ return [
         'butir_maksimum' => 10,
         'kuantitas_maksimum' => 100,
     ],
+
     // LP-14 dan LP-15: umur kunci sesi.
     'sesi' => [
         'masa_hidup_hari' => (int) env('LAPAK_SESI_MASA_HIDUP_HARI', 7),
@@ -19,5 +20,12 @@ return [
         'segar_menit' => (int) env('LAPAK_SESI_SEGAR_MENIT', 10),
         // terakhir_dipakai_pada tidak ditulis ulang lebih sering dari ini.
         'jeda_sentuh_detik' => 60,
+    ],
+
+    // Batas percobaan per menit untuk pintu yang menerima kata sandi.
+    'laju' => [
+        'masuk_per_akun' => 5,
+        'masuk_per_ip' => 20,
+        'konfirmasi' => 5,
     ],
 ];

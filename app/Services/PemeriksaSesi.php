@@ -9,9 +9,9 @@ use App\Enums\StatusAkun;
 use App\Models\Sesi;
 
 /**
- * Memeriksa apakah kunci dimiliki sesi yang masih berlaku.
- *
- * Seluruh kegagalan menghasilkan null yang sama.
+ * Menjawab satu pertanyaan pada setiap permintaan: kunci ini milik sesi yang masih berlaku?
+ * Seluruh kegagalan menghasilkan null yang sama. Pemanggil tidak dapat, dan tidak perlu,
+ * membedakan kunci salah bentuk, kunci tak dikenal, sesi dicabut, atau sesi kedaluwarsa.
  */
 final class PemeriksaSesi
 {
@@ -33,7 +33,8 @@ final class PemeriksaSesi
             return null;
         }
 
-        // Akun yang ditangguhkan kehilangan akses pada permintaan berikutnya.
+        // Akun yang ditangguhkan kehilangan aksesnya pada permintaan berikutnya,
+        // tanpa menunggu kuncinya kedaluwarsa.
         if ($sesi->pengguna->status !== StatusAkun::Aktif) {
             return null;
         }
@@ -43,19 +44,13 @@ final class PemeriksaSesi
         return $sesi;
     }
 
-    /**
-     * Mencatat pemakaian paling sering satu kali per jeda.
-     */
+    /** Mencatat pemakaian paling sering satu kali per jeda, agar tidak menulis pada tiap permintaan. */
     private function sentuh(Sesi $sesi): void
     {
-        $batas = now()->subSeconds(
-            config('lapak.sesi.jeda_sentuh_detik')
-        );
+        $batas = now()->subSeconds((int) config('lapak.sesi.jeda_sentuh_detik', 60));
 
         if ($sesi->terakhir_dipakai_pada->lt($batas)) {
-            $sesi->forceFill([
-                'terakhir_dipakai_pada' => now(),
-            ])->save();
+            $sesi->forceFill(['terakhir_dipakai_pada' => now()])->save();
         }
     }
 }
