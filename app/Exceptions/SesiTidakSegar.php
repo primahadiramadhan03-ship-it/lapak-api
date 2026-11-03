@@ -6,8 +6,10 @@ namespace App\Exceptions;
 
 final class SesiTidakSegar extends GalatDomain
 {
-    public static function buat(): self
+    public function __construct()
     {
-        return new self('LP-15', 'Sesi tidak segar. Kata sandi harus dikonfirmasi ulang.', 403);
+        parent::__construct('LP-15', 'Tindakan ini menuntut konfirmasi ulang kata sandi.', 403, [
+            'konfirmasi' => 'POST /api/v1/sesi/konfirmasi',
+        ]);
     }
 }

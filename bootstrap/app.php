@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->api(prepend: [PaksaJson::class, IdPermintaan::class]);
-        $middleware->alias(['sesi-segar' => SesiSegar::class]);
+        $middleware->alias(['sesi.segar' => SesiSegar::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(PenanganGalatApi::tangani(...));

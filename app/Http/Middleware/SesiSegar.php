@@ -22,7 +22,7 @@ final class SesiSegar
         $sesi = Sesi::dariPermintaan($request);
 
         if (! $sesi->segar()) {
-            throw SesiTidakSegar::buat();
+            throw new SesiTidakSegar;
         }
 
         return $next($request);
