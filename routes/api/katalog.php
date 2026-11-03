@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\KatalogController;
+use App\Http\Controllers\TokoSayaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('produk', [KatalogController::class, 'daftarProduk'])
@@ -16,3 +17,8 @@ Route::get('toko/{slug:slug}', [KatalogController::class, 'detailToko'])
 
 Route::get('kategori', [KatalogController::class, 'daftarKategori'])
     ->name('kategori.index');
+
+// Toko dan produk milik pengguna yang sedang masuk.
+Route::middleware('auth:sesi')->group(function (): void {
+    Route::get('toko-saya', [TokoSayaController::class, 'show'])->name('toko-saya.show');
+});
