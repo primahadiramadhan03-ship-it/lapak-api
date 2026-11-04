@@ -97,4 +97,28 @@ Nilai di luar batas dipotong ke batas terdekat, bukan menghasilkan galat.
 - Kata sandi dan hash-nya tidak boleh muncul pada respons mana pun.
 - Pengenal internal yang tidak diperlukan klien tidak dikirim.
 
+## 8. Keranjang Belanja
+
+### GET /api/v1/keranjang
+Melihat isi keranjang belanja milik pengguna yang sedang masuk. Butir yang tidak lagi tersedia atau stoknya kurang dipisahkan ke dalam array `tidak_tersedia`.
+
+Header:
+- `Authorization: Bearer <kunci>`
+
+Respons sukses (200):
+```json
+{
+  "sukses": true,
+  "data": {
+    "pesanan": [],
+    "total_bayar": {
+      "rupiah": 0,
+      "tampilan": "Rp 0"
+    },
+    "tidak_tersedia": []
+  },
+  "meta": null
+}
+```
+
 ---
