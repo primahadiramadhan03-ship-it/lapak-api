@@ -64,7 +64,7 @@ class PenanganGalatApi
         }
 
         if ($e instanceof AuthenticationException) {
-            return response()->json([
+            $response = response()->json([
                 'sukses' => false,
                 'galat' => [
                     'kode' => 'BELUM_MASUK',
@@ -72,6 +72,11 @@ class PenanganGalatApi
                     'rincian' => null,
                 ],
             ], 401);
+
+            // RFC 6750: header WWW-Authenticate untuk Bearer token
+            $response->headers->set('WWW-Authenticate', 'Bearer realm="Lapak API"');
+
+            return $response;
         }
 
         if ($e instanceof AuthorizationException || $e instanceof AccessDeniedHttpException) {

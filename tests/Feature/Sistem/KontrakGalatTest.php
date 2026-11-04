@@ -83,3 +83,17 @@ test('GalatDomain dirender dengan kode, status HTTP, dan rincian yang sesuai', f
             ],
         ]);
 });
+
+test('response 401 punya header WWW-Authenticate', function () {
+    $response = $this->getJson('/api/v1/saya');
+    expect($response->status())->toBe(401)
+        ->and($response->headers->has('WWW-Authenticate'))->toBeTrue()
+        ->and($response->headers->get('WWW-Authenticate'))->toContain('Bearer');
+});
+
+test('response 401 punya header Cache-Control no-store', function () {
+    $response = $this->getJson('/api/v1/saya');
+    expect($response->status())->toBe(401)
+        ->and($response->headers->has('Cache-Control'))->toBeTrue()
+        ->and($response->headers->get('Cache-Control'))->toContain('no-store');
+});
