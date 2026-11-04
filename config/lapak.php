@@ -8,6 +8,10 @@ return [
     'minimal_pencairan' => env('LAPAK_MINIMAL_PENCAIRAN', 10000),
     'batas_katalog' => env('LAPAK_BATAS_KATALOG', 50),
     'batas_keranjang' => env('LAPAK_BATAS_KERANJANG', 20),
+    'katalog' => [
+        'per_halaman_bawaan' => 12,
+        'per_halaman_maksimum' => 60,
+    ],
     'belanja' => [
         'butir_maksimum' => 10,
         'kuantitas_maksimum' => 100,
