@@ -8,9 +8,9 @@ use App\Http\Controllers\SesiController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('registrasi', RegistrasiController::class)->name('registrasi');
-Route::post('masuk', MasukController::class)->middleware(['throttle:masuk', 'tanpa-cache'])->name('masuk');
+Route::post('masuk', MasukController::class)->middleware('throttle:masuk')->name('masuk');
 
-Route::middleware(['auth:sesi', 'tanpa-cache'])->group(function (): void {
+Route::middleware('auth:sesi')->group(function (): void {
     Route::get('saya', [SesiController::class, 'saya'])->name('saya');
     Route::post('keluar', [SesiController::class, 'keluar'])->name('keluar');
     Route::get('sesi', [SesiController::class, 'index'])->name('sesi.index');

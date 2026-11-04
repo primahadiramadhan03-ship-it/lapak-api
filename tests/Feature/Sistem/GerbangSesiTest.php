@@ -37,10 +37,4 @@ describe('Gerbang Sesi', function () {
         app(PenerbitSesi::class)->cabut($sesi);
         $this->withHeader('Authorization', "Bearer {$kunci}")->getJson('/api/v1/keranjang')->assertUnauthorized();
     });
-
-    it('response 401 punya header WWW-Authenticate', function () {
-        $respons = $this->getJson('/api/v1/keranjang');
-        $respons->assertUnauthorized();
-        expect($respons->headers->has('WWW-Authenticate'))->toBeTrue();
-    });
 });

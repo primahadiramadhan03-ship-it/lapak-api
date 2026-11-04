@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Services\PangkasSesi;
+use App\Services\PangkasSesi as PangkasSesiService;
 use Illuminate\Console\Command;
 
-final class PangkasSesiCommand extends Command
+final class PangkasSesi extends Command
 {
-    protected $signature = 'sesi:pangkas';
+    protected $signature = 'lapak:pangkas-sesi';
 
     protected $description = 'Pangkas sesi kedaluwarsa dan menganggur dari basis data';
 
-    public function __invoke(PangkasSesi $pangkas): int
+    public function __invoke(PangkasSesiService $pangkas): int
     {
         $hapus = $pangkas->jalankan();
 
