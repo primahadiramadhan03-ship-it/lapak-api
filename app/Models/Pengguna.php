@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\StatusAkun;
 use Database\Factories\PenggunaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 final class Pengguna extends Authenticatable
@@ -36,10 +35,5 @@ final class Pengguna extends Authenticatable
             'kata_sandi' => 'hashed',
             'status' => StatusAkun::class,
         ];
-    }
-
-    public function dompet(): HasOne
-    {
-        return $this->hasOne(Dompet::class);
     }
 }

@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Dompet\SaldoController;
+use App\Http\Controllers\DompetController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sesi')->group(function () {
-    Route::get('/dompet/saya', SaldoController::class)->name('dompet.saya');
+// Pintu HTTP pertama ke domain uang, dan seluruhnya di belakang kunci sesi.
+Route::middleware('auth:sesi')->group(function (): void {
+    Route::get('dompet', [DompetController::class, 'show'])->name('dompet.show');
 });
