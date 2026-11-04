@@ -10,6 +10,6 @@ use Illuminate\Support\Facades\Route;
 Route::post('simulasi-belanja', SimulasiBelanjaController::class)->name('belanja.simulasi');
 
 // Keranjang selalu milik pengguna yang sedang masuk. Checkout menyusul pada Sesi 4.
-Route::middleware('auth:sesi')->group(function (): void {
+Route::middleware(['auth:sesi', 'tanpa-cache'])->group(function (): void {
     Route::get('keranjang', [KeranjangController::class, 'show'])->name('keranjang.show');
 });
