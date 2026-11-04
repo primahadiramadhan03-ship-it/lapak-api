@@ -50,12 +50,10 @@ it('menampilkan daftar produk yang aktif', function (): void {
 
     $respon->assertOk()
         ->assertJsonStructure([
-            'data' => [
-                'meta' => ['total', 'halaman', 'per_halaman'],
-                'data' => ['*' => ['id', 'nama', 'slug', 'harga_rupiah', 'status']],
-            ],
+            'data' => ['*' => ['id', 'nama', 'slug', 'harga_rupiah', 'status']],
+            'meta' => ['total', 'halaman', 'per_halaman'],
         ])
-        ->assertJson(['data' => ['meta' => ['total' => 10]]]);
+        ->assertJson(['meta' => ['total' => 10]]);
 });
 
 it('menolak produk draf dan toko yang belum aktif', function (): void {
@@ -79,7 +77,7 @@ it('menolak produk draf dan toko yang belum aktif', function (): void {
     $respon = getJson('/api/v1/produk');
 
     $respon->assertOk()
-        ->assertJson(['data' => ['meta' => ['total' => 1]]]);
+        ->assertJson(['meta' => ['total' => 1]]);
 });
 
 it('mengembalikan 404 untuk produk draf', function (): void {
@@ -115,7 +113,7 @@ it('memfilter produk berdasarkan pencarian', function (): void {
     $respon = getJson('/api/v1/produk?cari=batik');
 
     $respon->assertOk()
-        ->assertJson(['data' => ['meta' => ['total' => 1]]]);
+        ->assertJson(['meta' => ['total' => 1]]);
 });
 
 it('mengabaikan karakter % pada pencarian', function (): void {
@@ -127,7 +125,7 @@ it('mengabaikan karakter % pada pencarian', function (): void {
     $respon = getJson('/api/v1/produk?cari=%25%25');
 
     $respon->assertOk()
-        ->assertJson(['data' => ['meta' => ['total' => 0]]]);
+        ->assertJson(['meta' => ['total' => 0]]);
 });
 
 it('mengembalikan 422 saat urut tidak ada di daftar putih', function (): void {
@@ -145,8 +143,8 @@ it('mengurutkan produk sesuai daftar putih', function (): void {
     $respon = getJson('/api/v1/produk?urut=harga&arah=asc');
 
     $respon->assertOk()
-        ->assertJsonPath('data.data.0.id', $murah->id)
-        ->assertJsonPath('data.data.1.id', $mahal->id);
+        ->assertJsonPath('data.0.id', $murah->id)
+        ->assertJsonPath('data.1.id', $mahal->id);
 });
 
 it('menampilkan detail toko aktif beserta produknya', function (): void {
