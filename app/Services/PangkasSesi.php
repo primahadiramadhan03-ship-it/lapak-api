@@ -6,10 +6,8 @@ namespace App\Services;
 
 use App\Models\Sesi;
 
-
 final class PangkasSesi
 {
-    
     public function hapusSesiKedaluwarsa(): int
     {
         return Sesi::query()
@@ -17,7 +15,6 @@ final class PangkasSesi
             ->delete();
     }
 
-    
     public function hapusSesiMenganggur(): int
     {
         $batasMenganggur = now()->subMinutes(config('lapak.sesi.menganggur_menit', 120));
@@ -27,7 +24,6 @@ final class PangkasSesi
             ->delete();
     }
 
-    
     public function jalankan(): int
     {
         $kedaluwarsa = $this->hapusSesiKedaluwarsa();

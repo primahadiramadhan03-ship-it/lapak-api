@@ -10,7 +10,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class TanpaCacheResponSensitif
 {
-    
     private const SENSITIVE_PATHS = [
         'api/v1/sesi',
         'api/v1/dompet',
