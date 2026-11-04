@@ -37,18 +37,26 @@ final class KatalogController extends Controller
         );
 
         $halaman = (int) ($request->validated('halaman') ?? 1);
-        $perPage = (int) ($request->validated('per_page') ?? 10);
+        $perPage = (int) ($request->validated('per_page') ?? config('lapak.katalog.per_halaman_bawaan', 12));
 
         $hasil = $kueri->paginate($perPage, ['*'], 'halaman', $halaman);
 
-        return $this->sukses([
-            'meta' => [
-                'total' => $hasil->total(),
-                'halaman' => $hasil->currentPage(),
-                'per_halaman' => $hasil->perPage(),
-            ],
-            'data' => ProdukResource::collection($hasil->items()),
-        ]);
+        return $this->berhalaman($hasil, ProdukResource::class);
+    }
+
+    public function index(KatalogRequest $request): JsonResponse
+    {
+        return $this->daftarProduk($request);
+    }
+
+    public function show(string $slug): JsonResponse
+    {
+        return $this->detailProduk($slug);
+    }
+
+    public function toko(string $slug): JsonResponse
+    {
+        return $this->detailToko($slug);
     }
 
     public function detailProduk(string $slug): JsonResponse
