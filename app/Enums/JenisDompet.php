@@ -10,6 +10,7 @@ enum JenisDompet: string
     case Escrow = 'escrow';
     case Pendapatan = 'pendapatan';
     case Penjual = 'penjual';
+    case Pribadi = 'pribadi';
 
     public function bolehNegatif(): bool
     {
