@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             PenggunaSeeder::class,
             DompetSeeder::class,
             KatalogSeeder::class,
+            TransaksiSeeder::class,
         ]);
     }
 }
