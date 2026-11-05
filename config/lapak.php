@@ -14,7 +14,7 @@ return [
     ],
     'belanja' => [
         'butir_maksimum' => 10,
-        'kuantitas_maksimum' => 100,
+        'kuantitas_maksimum' => 99,
     ],
 
     // LP-14 dan LP-15: umur kunci sesi.
