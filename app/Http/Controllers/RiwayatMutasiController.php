@@ -25,22 +25,13 @@ final class RiwayatMutasiController extends Controller
             ]);
         }
 
-        // Gunakan config lapak.katalog.per_halaman_bawaan (12)
-        $perHalaman = config('lapak.katalog.per_halaman_bawaan', 12);
+        // Gunakan konfigurasi jumlah mutasi per halaman
+        $perHalaman = (int) config('lapak.katalog.per_halaman_bawaan', 12);
 
         $mutasi = $dompet->mutasi()
-            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate($perHalaman);
 
-        return response()->json([
-            'sukses' => true,
-            'meta' => [
-                'halaman' => $mutasi->currentPage(),
-                'per_halaman' => $mutasi->perPage(),
-                'total' => $mutasi->total(),
-                'halaman_terakhir' => $mutasi->lastPage(),
-            ],
-            'data' => MutasiResource::collection($mutasi),
-        ]);
+        return $this->berhalaman($mutasi, MutasiResource::class);
     }
 }

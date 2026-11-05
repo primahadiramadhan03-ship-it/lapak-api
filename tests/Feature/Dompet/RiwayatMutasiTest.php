@@ -6,6 +6,7 @@ use App\Models\Dompet;
 use App\Models\MutasiSaldo;
 use App\Models\Pengguna;
 use App\Services\BukuBesar;
+use App\Services\PenerbitSesi;
 use Database\Seeders\TransaksiSeeder;
 
 it('menolak permintaan tanpa kunci sesi', function () {
@@ -130,24 +131,39 @@ it('menolak kunci sesi lama setelah rotasi dan menerima kunci baru', function ()
     if ($luar === null) {
         $luar = Dompet::buat('eksternal', JenisDompet::Eksternal, 0);
     }
+
     $escrow = Dompet::query()->where('jenis', JenisDompet::Escrow)->first();
     if ($escrow === null) {
         $escrow = Dompet::buat('escrow', JenisDompet::Escrow, 0);
     }
+
     $dompet = Dompet::buat('penjual:'.$pengguna->id, JenisDompet::Penjual, 0);
 
     $buku->pindahkan($luar, $escrow, 100000, JenisMutasi::DanaMasuk, 'TRX-ROTASI');
     $buku->pindahkan($escrow, $dompet, 100000, JenisMutasi::LepasDana, 'TRX-ROTASI');
 
-    // Sesi pertama: berhasil
-    $response1 = $this->sebagai($pengguna)
-        ->getJson('/api/v1/dompet/mutasi');
-    $response1->assertOk();
+    $penerbit = app(PenerbitSesi::class);
 
-    // Simulasi rotasi: buat sesi baru
-    $response2 = $this->sebagai($pengguna)
-        ->getJson('/api/v1/dompet/mutasi');
-    $response2->assertOk()
+    // Terbitkan sesi dan simpan kunci lama.
+    [$sesi, $kunciLama] = $penerbit->terbitkan($pengguna, 'Perangkat uji');
+
+    // Pastikan kunci lama masih berlaku sebelum rotasi.
+    $this->withHeader('Authorization', 'Bearer '.$kunciLama)
+        ->getJson('/api/v1/dompet/mutasi')
+        ->assertOk();
+
+    // Lakukan rotasi pada sesi yang sama.
+    $kunciBaru = $penerbit->rotasi($sesi);
+
+    // Kunci lama harus ditolak.
+    $this->withHeader('Authorization', 'Bearer '.$kunciLama)
+        ->getJson('/api/v1/dompet/mutasi')
+        ->assertUnauthorized();
+
+    // Kunci baru harus diterima.
+    $this->withHeader('Authorization', 'Bearer '.$kunciBaru)
+        ->getJson('/api/v1/dompet/mutasi')
+        ->assertOk()
         ->assertJsonCount(1, 'data');
 });
 
