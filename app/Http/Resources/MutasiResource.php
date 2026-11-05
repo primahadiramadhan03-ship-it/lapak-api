@@ -21,10 +21,7 @@ final class MutasiResource extends JsonResource
                 'rupiah' => $this->jumlah_rupiah,
                 'tampilan' => $jumlah->format(),
             ],
-            'saldo_setelah' => [
-                'rupiah' => $this->saldo_setelah,
-                'tampilan' => Uang::dari($this->saldo_setelah)->format(),
-            ],
+            'saldo_setelah' => $this->saldo_setelah, // Angka saja, bukan objek
             'rujukan' => $this->rujukan,
             'keterangan' => $this->keterangan,
             'waktu' => $this->created_at->toISOString(),

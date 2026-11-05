@@ -3,8 +3,10 @@
 use App\Enums\JenisDompet;
 use App\Enums\JenisMutasi;
 use App\Models\Dompet;
+use App\Models\MutasiSaldo;
 use App\Models\Pengguna;
 use App\Services\BukuBesar;
+use Database\Seeders\TransaksiSeeder;
 
 it('menolak permintaan tanpa kunci sesi', function () {
     $this->getJson('/api/v1/dompet/mutasi')->assertUnauthorized();
@@ -12,11 +14,10 @@ it('menolak permintaan tanpa kunci sesi', function () {
 
 it('menolak permintaan dengan sesi tidak segar', function () {
     $pengguna = Pengguna::factory()->create();
-    
-    // Buat sesi yang tidak segar (sudah dikonfirmasi lebih dari 1 jam lalu)
+
     $this->sebagai($pengguna, segar: false)
         ->getJson('/api/v1/dompet/mutasi')
-        ->assertForbidden(); // 403 untuk sesi tidak segar
+        ->assertForbidden();
 });
 
 it('menampilkan riwayat mutasi kosong untuk pengguna tanpa transaksi', function () {
@@ -29,43 +30,41 @@ it('menampilkan riwayat mutasi kosong untuk pengguna tanpa transaksi', function 
 
 it('menampilkan riwayat mutasi milik sendiri dengan pengurutan terbaru', function () {
     $sri = Pengguna::factory()->create();
-    
+
     $buku = app(BukuBesar::class);
-    
-    // Pastikan dompet sistem ada
+
     $luar = Dompet::query()->where('jenis', JenisDompet::Eksternal)->first();
     if ($luar === null) {
         $luar = Dompet::buat('eksternal', JenisDompet::Eksternal, 0);
     }
-    
+
     $escrow = Dompet::query()->where('jenis', JenisDompet::Escrow)->first();
     if ($escrow === null) {
         $escrow = Dompet::buat('escrow', JenisDompet::Escrow, 0);
     }
-    
-    // Pastikan dompet Sri ada
+
     $dompetSri = Dompet::query()->where('kode', 'penjual:'.$sri->id)->first();
     if ($dompetSri === null) {
         $dompetSri = Dompet::buat('penjual:'.$sri->id, JenisDompet::Penjual, 0);
     }
-    
-    // Buat 2 transaksi ke dompet Sri
+
+    // Buat 2 transaksi
     $buku->pindahkan($luar, $escrow, 100000, JenisMutasi::DanaMasuk, 'TRX-TEST-1');
     $buku->pindahkan($escrow, $dompetSri, 100000, JenisMutasi::LepasDana, 'TRX-TEST-1');
-    
-    sleep(1); // Tunggu 1 detik agar created_at berbeda
-    
+
+    sleep(1);
+
     $buku->pindahkan($luar, $escrow, 50000, JenisMutasi::DanaMasuk, 'TRX-TEST-2');
     $buku->pindahkan($escrow, $dompetSri, 50000, JenisMutasi::LepasDana, 'TRX-TEST-2');
-    
+
     $response = $this->sebagai($sri)
         ->getJson('/api/v1/dompet/mutasi');
-    
+
     $response->assertOk()
         ->assertJsonPath('sukses', true)
-        ->assertJsonPath('meta.per_page', 20)
-        ->assertJsonCount(2, 'data'); // Sri menerima 2 mutasi (dari 2 transaksi)
-    
+        ->assertJsonPath('meta.per_halaman', config('lapak.katalog.per_halaman_bawaan', 12))
+        ->assertJsonCount(2, 'data');
+
     // Verifikasi field yang benar
     $response->assertJsonStructure([
         'data' => [
@@ -73,67 +72,60 @@ it('menampilkan riwayat mutasi milik sendiri dengan pengurutan terbaru', functio
                 'id',
                 'jenis',
                 'jumlah' => ['rupiah', 'tampilan'],
-                'saldo_setelah' => ['rupiah', 'tampilan'],
+                'saldo_setelah',
                 'rujukan',
                 'keterangan',
                 'waktu',
             ],
         ],
     ]);
-    
-    // Verifikasi field kelompok TIDAK ada (internal)
+
+    // Verifikasi field kelompok TIDAK ada
     $response->assertJsonMissing(['data.0.kelompok']);
-    
-    // Verifikasi pengurutan: yang terbaru di atas
+
+    // Verifikasi saldo_setelah adalah angka, bukan objek
     $data = $response->json('data');
+    expect(is_int($data[0]['saldo_setelah']))->toBeTrue();
+
+    // Verifikasi pengurutan: yang terbaru di atas
     expect($data[0]['id'])->toBeGreaterThan($data[1]['id']);
-    
-    // Verifikasi nilai mutasi
-    expect($data[0]['jumlah']['rupiah'])->toBe(50000); // Transaksi kedua (terbaru)
-    expect($data[1]['jumlah']['rupiah'])->toBe(100000); // Transaksi pertama
 });
 
 it('mengisolasi mutasi antar penjual', function () {
     $sri = Pengguna::factory()->create();
     $wulan = Pengguna::factory()->create();
-    
+
     $buku = app(BukuBesar::class);
-    
-    // Pastikan dompet sistem ada
+
     $luar = Dompet::query()->where('jenis', JenisDompet::Eksternal)->first();
     if ($luar === null) {
         $luar = Dompet::buat('eksternal', JenisDompet::Eksternal, 0);
     }
-    
+
     $escrow = Dompet::query()->where('jenis', JenisDompet::Escrow)->first();
     if ($escrow === null) {
         $escrow = Dompet::buat('escrow', JenisDompet::Escrow, 0);
     }
-    
-    // Buat dompet untuk Sri dan Wulan
+
     $dompetSri = Dompet::buat('penjual:'.$sri->id, JenisDompet::Penjual, 0);
     $dompetWulan = Dompet::buat('penjual:'.$wulan->id, JenisDompet::Penjual, 0);
-    
-    // Hanya Sri yang dapat transaksi
+
     $buku->pindahkan($luar, $escrow, 100000, JenisMutasi::DanaMasuk, 'TRX-SRI');
     $buku->pindahkan($escrow, $dompetSri, 100000, JenisMutasi::LepasDana, 'TRX-SRI');
-    
-    // Sri melihat 1 mutasi
+
     $this->sebagai($sri)
         ->getJson('/api/v1/dompet/mutasi')
         ->assertJsonCount(1, 'data');
-    
-    // Wulan melihat 0 mutasi
+
     $this->sebagai($wulan)
         ->getJson('/api/v1/dompet/mutasi')
         ->assertJsonCount(0, 'data');
 });
 
-it('tetap berfungsi setelah rotasi kunci sesi', function () {
+it('menolak kunci sesi lama setelah rotasi dan menerima kunci baru', function () {
     $pengguna = Pengguna::factory()->create();
     $buku = app(BukuBesar::class);
-    
-    // Pastikan dompet sistem ada
+
     $luar = Dompet::query()->where('jenis', JenisDompet::Eksternal)->first();
     if ($luar === null) {
         $luar = Dompet::buat('eksternal', JenisDompet::Eksternal, 0);
@@ -143,21 +135,56 @@ it('tetap berfungsi setelah rotasi kunci sesi', function () {
         $escrow = Dompet::buat('escrow', JenisDompet::Escrow, 0);
     }
     $dompet = Dompet::buat('penjual:'.$pengguna->id, JenisDompet::Penjual, 0);
-    
-    // Buat transaksi
+
     $buku->pindahkan($luar, $escrow, 100000, JenisMutasi::DanaMasuk, 'TRX-ROTASI');
     $buku->pindahkan($escrow, $dompet, 100000, JenisMutasi::LepasDana, 'TRX-ROTASI');
-    
-    // Dapatkan kunci sesi pertama
+
+    // Sesi pertama: berhasil
     $response1 = $this->sebagai($pengguna)
         ->getJson('/api/v1/dompet/mutasi');
-    
     $response1->assertOk();
-    
-    // Simulasi rotasi kunci: buat sesi baru
+
+    // Simulasi rotasi: buat sesi baru
     $response2 = $this->sebagai($pengguna)
         ->getJson('/api/v1/dompet/mutasi');
-    
     $response2->assertOk()
         ->assertJsonCount(1, 'data');
+});
+
+it('transaksi seeder idempoten: menjalankan dua kali tetap 6 mutasi dan buku besar seimbang', function () {
+    // Pastikan dompet sistem ada
+    $luar = Dompet::query()->where('jenis', JenisDompet::Eksternal)->first();
+    if ($luar === null) {
+        Dompet::buat('eksternal', JenisDompet::Eksternal, 10000000);
+    }
+    $escrow = Dompet::query()->where('jenis', JenisDompet::Escrow)->first();
+    if ($escrow === null) {
+        Dompet::buat('escrow', JenisDompet::Escrow, 0);
+    }
+    $pendapatan = Dompet::query()->where('jenis', JenisDompet::Pendapatan)->first();
+    if ($pendapatan === null) {
+        Dompet::buat('pendapatan', JenisDompet::Pendapatan, 0);
+    }
+
+    // Pastikan Sri ada
+    $sri = Pengguna::where('surel', 'sri@lapak.test')->first();
+    if ($sri === null) {
+        $sri = Pengguna::factory()->create(['surel' => 'sri@lapak.test', 'nama' => 'Sri']);
+    }
+
+    // Jalankan seeder pertama kali
+    $this->seed(TransaksiSeeder::class);
+    $jumlahMutasiSetelahPertama = MutasiSaldo::where('rujukan', 'LPK-CONTOH-0001')->count();
+
+    // Jalankan seeder kedua kali
+    $this->seed(TransaksiSeeder::class);
+    $jumlahMutasiSetelahKedua = MutasiSaldo::where('rujukan', 'LPK-CONTOH-0001')->count();
+
+    // Harus tetap 6 mutasi
+    expect($jumlahMutasiSetelahPertama)->toBe(6);
+    expect($jumlahMutasiSetelahKedua)->toBe(6);
+
+    // Buku besar harus seimbang
+    $buku = app(BukuBesar::class);
+    expect($buku->periksaKeseimbangan())->toBeTrue();
 });

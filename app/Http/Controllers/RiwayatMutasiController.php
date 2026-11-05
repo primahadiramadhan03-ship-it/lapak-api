@@ -25,18 +25,20 @@ final class RiwayatMutasiController extends Controller
             ]);
         }
 
-        // Pagination dengan 20 item per halaman
+        // Gunakan config lapak.katalog.per_halaman_bawaan (12)
+        $perHalaman = config('lapak.katalog.per_halaman_bawaan', 12);
+
         $mutasi = $dompet->mutasi()
             ->orderByDesc('created_at')
-            ->paginate(20);
+            ->paginate($perHalaman);
 
         return response()->json([
             'sukses' => true,
             'meta' => [
-                'current_page' => $mutasi->currentPage(),
-                'last_page' => $mutasi->lastPage(),
-                'per_page' => $mutasi->perPage(),
+                'halaman' => $mutasi->currentPage(),
+                'per_halaman' => $mutasi->perPage(),
                 'total' => $mutasi->total(),
+                'halaman_terakhir' => $mutasi->lastPage(),
             ],
             'data' => MutasiResource::collection($mutasi),
         ]);
