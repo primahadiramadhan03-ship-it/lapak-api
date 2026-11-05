@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\MutasiResource;
 use App\Services\BukuBesar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,25 +25,20 @@ final class RiwayatMutasiController extends Controller
             ]);
         }
 
-        // Urutkan berdasarkan created_at descending (terbaru di atas)
+        // Pagination dengan 20 item per halaman
         $mutasi = $dompet->mutasi()
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn ($m) => [
-                'id' => $m->id,
-                'kelompok' => $m->kelompok,
-                'jenis' => $m->jenis->value,
-                'jumlah_rupiah' => $m->jumlah_rupiah,
-                'saldo_setelah' => $m->saldo_setelah,
-                'rujukan' => $m->rujukan,
-                'keterangan' => $m->keterangan,
-                'dibuat_pada' => $m->created_at->toISOString(), // Gunakan created_at
-            ]);
+            ->paginate(20);
 
         return response()->json([
             'sukses' => true,
-            'meta' => null,
-            'data' => $mutasi,
+            'meta' => [
+                'current_page' => $mutasi->currentPage(),
+                'last_page' => $mutasi->lastPage(),
+                'per_page' => $mutasi->perPage(),
+                'total' => $mutasi->total(),
+            ],
+            'data' => MutasiResource::collection($mutasi),
         ]);
     }
 }
