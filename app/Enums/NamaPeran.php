@@ -18,7 +18,7 @@ enum NamaPeran: string
      *
      * @return list<NamaIzin>
      */
-    public function izin(): array
+    public function izinBawaan(): array
     {
         return match ($this) {
             self::Pembeli => [

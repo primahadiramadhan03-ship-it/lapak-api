@@ -8,25 +8,25 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('peran_pengguna', function (Blueprint $tabel) {
+        Schema::create('peran_izin', function (Blueprint $tabel) {
             $tabel->id();
-
-            $tabel->foreignId('pengguna_id')
-                ->constrained('pengguna')
-                ->cascadeOnDelete();
 
             $tabel->foreignId('peran_id')
                 ->constrained('peran')
                 ->cascadeOnDelete();
 
+            $tabel->foreignId('izin_id')
+                ->constrained('izin')
+                ->cascadeOnDelete();
+
             $tabel->timestamps();
 
-            $tabel->unique(['pengguna_id', 'peran_id']);
+            $tabel->unique(['peran_id', 'izin_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('peran_pengguna');
+        Schema::dropIfExists('peran_izin');
     }
 };

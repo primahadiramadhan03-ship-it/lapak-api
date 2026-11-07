@@ -24,7 +24,7 @@ final class Izin extends Model
     /** @return BelongsToMany<Peran, $this> */
     public function peran(): BelongsToMany
     {
-        return $this->belongsToMany(Peran::class, 'izin_peran', 'izin_id', 'peran_id')
+        return $this->belongsToMany(Peran::class, 'peran_izin', 'izin_id', 'peran_id')
             ->withTimestamps();
     }
 }

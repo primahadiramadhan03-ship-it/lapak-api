@@ -28,7 +28,7 @@ class PeranIzinSeeder extends Seeder
 
             $peran->izin()->sync(array_map(
                 static fn (NamaIzin $namaIzin): int => $izin[$namaIzin->value]->getKey(),
-                $nama->izin(),
+                $nama->izinBawaan(),
             ));
         }
     }

@@ -19,6 +19,7 @@
   - Menyusun model `Peran` dan `Izin`, migration pivot, serta `PeranIzinSeeder` yang idempotent.
   - Menyusun `PemeriksaIzin`, middleware `PastikanIzin` dengan alias `izin:<nama>`, dan command `lapak:matriks-izin`.
   - Menyusun `MatriksOtorisasiTest` untuk memeriksa kesesuaian matriks, seeder, middleware, dan command.
+  - Menyesuaikan prioritas middleware, nama tabel pivot, kontrak method, folder matriks domain, dan bagian Otorisasi di `KONTRAK-API.md` berdasarkan review A1.
 
 **Cara memverifikasi hasil**:
   - Menjalankan `php artisan test --filter=MatriksOtorisasiTest` sampai seluruh kasus lulus.

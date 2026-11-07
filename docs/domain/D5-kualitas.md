@@ -29,14 +29,15 @@
 | `app/Http/Middleware/PastikanIzin.php` | Middleware alias `izin:<nama>` |
 | `app/Console/Commands/MatriksIzin.php` | Perintah `lapak:matriks-izin` |
 | `database/seeders/PeranIzinSeeder.php` | Seeder peran, izin, dan pivot yang idempotent |
+| `tests/Feature/Sistem/matriks/` | Matriks rute per domain untuk pengujian otorisasi |
 
 ## 2. Tabel yang dimiliki
 
-Sesi 1 belum memiliki tabel. Rencana kepemilikan:
+Tabel D5 mulai berlaku pada Sesi 3:
 
 | Sesi | Tabel |
 |---|---|
-| 3 | `peran`, `izin`, `peran_pengguna`, `izin_peran` |
+| 3 | `peran`, `izin`, `pengguna_peran`, `peran_izin` |
 | 4 | `kunci_idempotensi` |
 | 5 | `log_audit` |
 

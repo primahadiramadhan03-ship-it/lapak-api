@@ -25,7 +25,7 @@ final class MatriksIzin extends Command
                 ...array_combine(
                     array_map(static fn (NamaPeran $nama): string => $nama->value, $peran),
                     array_map(
-                        static fn (NamaPeran $nama): string => in_array($izin, $nama->izin(), true) ? 'v' : '-',
+                        static fn (NamaPeran $nama): string => in_array($izin, $nama->izinBawaan(), true) ? 'v' : '-',
                         $peran,
                     ),
                 ),

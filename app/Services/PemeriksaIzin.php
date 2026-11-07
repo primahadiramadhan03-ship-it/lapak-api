@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
  */
 final class PemeriksaIzin
 {
-    public function boleh(Pengguna $pengguna, NamaIzin $izin): bool
+    public function punya(Pengguna $pengguna, NamaIzin $izin): bool
     {
         return Peran::query()
             ->whereHas('pengguna', fn (Builder $kueri) => $kueri->where('pengguna.id', $pengguna->getKey()))
@@ -29,16 +29,22 @@ final class PemeriksaIzin
      *
      * @return list<NamaIzin>
      */
-    public function semua(Pengguna $pengguna): array
+    public function daftar(Pengguna $pengguna): array
     {
-        $nama = Izin::query()
+        return Izin::query()
             ->whereHas('peran.pengguna', fn (Builder $kueri) => $kueri->where('pengguna.id', $pengguna->getKey()))
             ->pluck('nama')
             ->map(static fn (NamaIzin|string $nama): NamaIzin => $nama instanceof NamaIzin ? $nama : NamaIzin::from($nama))
             ->unique()
             ->values()
             ->all();
+    }
 
-        return $nama;
+    /**
+     * Hook ingatan izin. A1 belum menyimpan cache; B2 akan mengisinya.
+     */
+    public function lupakan(Pengguna $pengguna): void
+    {
+        // Hook B2: ingatan izin belum disimpan pada A1.
     }
 }

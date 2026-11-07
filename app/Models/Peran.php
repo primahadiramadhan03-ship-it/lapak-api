@@ -24,14 +24,15 @@ final class Peran extends Model
     /** @return BelongsToMany<Izin, $this> */
     public function izin(): BelongsToMany
     {
-        return $this->belongsToMany(Izin::class, 'izin_peran', 'peran_id', 'izin_id')
+        return $this->belongsToMany(Izin::class, 'peran_izin', 'peran_id', 'izin_id')
             ->withTimestamps();
     }
 
     /** @return BelongsToMany<Pengguna, $this> */
     public function pengguna(): BelongsToMany
     {
-        return $this->belongsToMany(Pengguna::class, 'peran_pengguna', 'peran_id', 'pengguna_id')
+        return $this->belongsToMany(Pengguna::class, 'pengguna_peran', 'peran_id', 'pengguna_id')
+            ->withPivot('diberikan_oleh')
             ->withTimestamps();
     }
 }

@@ -122,3 +122,51 @@ Respons sukses (200):
 ```
 
 ---
+
+## Otorisasi
+
+Autentikasi menjawab "siapa yang masuk" melalui `auth:sesi`. Otorisasi menjawab
+"siapa boleh melakukan apa" melalui middleware `izin:<nama>`. Keduanya dipakai
+berurutan pada rute yang tidak terbuka untuk publik.
+
+### Peran dan izin
+
+| Peran | Izin bawaan |
+|---|---|
+| `pembeli` | `keranjang.kelola`, `toko.buka` |
+| `penjual` | `produk.kelola`, `dompet.lihat` |
+| `admin` | `toko.moderasi`, `peran.kelola` |
+| `keuangan` | `buku-besar.lihat` |
+| `auditor` | `buku-besar.lihat` |
+
+Nilai `*` berarti semua pengguna yang sudah masuk, bukan pengunjung tanpa sesi.
+
+### Middleware `izin:<nama>`
+
+Rute menjaga izin dengan menuliskan nama izin sebagai parameter middleware:
+
+```php
+Route::middleware(['auth:sesi', 'izin:toko.moderasi'])
+    ->get('/contoh', ...);
+```
+
+`PastikanIzin` dijalankan sebelum `SubstituteBindings`, sehingga pengecekan izin
+tidak menunggu route model binding mencari objek. Pengguna yang tidak memegang
+izin menerima respons `403` dengan kode `DITOLAK`.
+
+### Matriks rute
+
+Setiap endpoint yang dilindungi `auth:sesi` wajib terdaftar pada salah satu
+berkas `tests/Feature/Sistem/matriks/{domain}.php`. Bentuk berkasnya:
+
+```php
+return [
+    'GET /api/v1/contoh' => '*',
+];
+```
+
+Nilai boleh berupa `*` atau nama izin. Pada A1 seluruh nilai masih `*`; Jendela B
+mengganti nilai tersebut sesuai izin domainnya. Uji `MatriksOtorisasiTest`
+memastikan tidak ada rute terlindung yang terlewat dari matriks.
+
+---

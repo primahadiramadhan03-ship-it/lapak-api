@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 use App\Enums\NamaIzin;
 use App\Enums\NamaPeran;
+use App\Http\Middleware\PastikanIzin;
 use App\Models\Izin;
 use App\Models\Pengguna;
 use App\Models\Peran;
 use App\Services\PemeriksaIzin;
 use Database\Seeders\PeranIzinSeeder;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 describe('Matriks Otorisasi', function () {
     beforeEach(function () {
@@ -21,6 +25,21 @@ describe('Matriks Otorisasi', function () {
                 ->firstOrFail()
                 ->pengguna()
                 ->attach($pengguna->getKey());
+        };
+
+        $this->muatMatriks = function (): array {
+            $berkas = glob(__DIR__.'/matriks/*.php') ?: [];
+            $matriks = [];
+
+            foreach ($berkas as $path) {
+                $isi = require $path;
+
+                foreach ($isi as $rute => $izin) {
+                    $matriks[$rute] = $izin;
+                }
+            }
+
+            return $matriks;
         };
     });
 
@@ -40,18 +59,18 @@ describe('Matriks Otorisasi', function () {
     });
 
     it('memetakan izin per peran sesuai matriks yang disepakati', function () {
-        expect(NamaPeran::Pembeli->izin())->toEqualCanonicalizing([
+        expect(NamaPeran::Pembeli->izinBawaan())->toEqualCanonicalizing([
             NamaIzin::KeranjangKelola,
             NamaIzin::TokoBuka,
-        ])->and(NamaPeran::Penjual->izin())->toEqualCanonicalizing([
+        ])->and(NamaPeran::Penjual->izinBawaan())->toEqualCanonicalizing([
             NamaIzin::ProdukKelola,
             NamaIzin::DompetLihat,
-        ])->and(NamaPeran::Admin->izin())->toEqualCanonicalizing([
+        ])->and(NamaPeran::Admin->izinBawaan())->toEqualCanonicalizing([
             NamaIzin::TokoModerasi,
             NamaIzin::PeranKelola,
-        ])->and(NamaPeran::Keuangan->izin())->toEqualCanonicalizing([
+        ])->and(NamaPeran::Keuangan->izinBawaan())->toEqualCanonicalizing([
             NamaIzin::BukuBesarLihat,
-        ])->and(NamaPeran::Auditor->izin())->toEqualCanonicalizing([
+        ])->and(NamaPeran::Auditor->izinBawaan())->toEqualCanonicalizing([
             NamaIzin::BukuBesarLihat,
         ]);
     });
@@ -60,7 +79,7 @@ describe('Matriks Otorisasi', function () {
         $izinTerpakai = [];
 
         foreach (NamaPeran::cases() as $peran) {
-            foreach ($peran->izin() as $izin) {
+            foreach ($peran->izinBawaan() as $izin) {
                 $izinTerpakai[] = $izin->value;
             }
         }
@@ -82,9 +101,17 @@ describe('Matriks Otorisasi', function () {
             expect($tersimpan->izin()->pluck('nama')->map(
                 static fn (NamaIzin $izin): string => $izin->value,
             )->all())->toEqualCanonicalizing(
-                array_map(static fn (NamaIzin $izin): string => $izin->value, $peran->izin()),
+                array_map(static fn (NamaIzin $izin): string => $izin->value, $peran->izinBawaan()),
             );
         }
+    });
+
+    it('menyediakan kolom diberikan_oleh yang nullable pada pengguna_peran', function () {
+        $kolom = collect(Schema::getColumns('pengguna_peran'))
+            ->firstWhere('name', 'diberikan_oleh');
+
+        expect($kolom)->not->toBeNull()
+            ->and($kolom['nullable'])->toBeTrue();
     });
 
     it('menggabungkan izin dari seluruh peran pengguna tanpa duplikat', function () {
@@ -93,11 +120,82 @@ describe('Matriks Otorisasi', function () {
         ($this->lampirkanPeran)($pengguna, NamaPeran::Keuangan);
         ($this->lampirkanPeran)($pengguna, NamaPeran::Auditor);
 
-        expect(app(PemeriksaIzin::class)->semua($pengguna))->toEqualCanonicalizing([
+        expect(app(PemeriksaIzin::class)->daftar($pengguna))->toEqualCanonicalizing([
             NamaIzin::TokoModerasi,
             NamaIzin::PeranKelola,
             NamaIzin::BukuBesarLihat,
         ]);
+    });
+
+    it('menyediakan hook lupakan yang dapat dipanggil', function () {
+        $pengguna = Pengguna::factory()->create();
+
+        app(PemeriksaIzin::class)->lupakan($pengguna);
+
+        expect(true)->toBeTrue();
+    });
+
+    it('memeriksa izin sebelum substitute bindings', function () {
+        $prioritas = app(HttpKernel::class)->getMiddlewarePriority();
+
+        $posisiIzin = array_search(PastikanIzin::class, $prioritas, true);
+        $posisiBinding = array_search(SubstituteBindings::class, $prioritas, true);
+
+        expect($posisiIzin)->not->toBeFalse()
+            ->and($posisiBinding)->not->toBeFalse()
+            ->and($posisiIzin)->toBeLessThan($posisiBinding);
+    });
+
+    it('menyediakan empat berkas matriks domain', function () {
+        $berkas = array_map(
+            static fn (string $path): string => basename($path),
+            glob(__DIR__.'/matriks/*.php') ?: [],
+        );
+
+        expect($berkas)->toEqualCanonicalizing([
+            'identitas.php',
+            'katalog.php',
+            'belanja.php',
+            'dompet.php',
+        ]);
+    });
+
+    it('mengisi matriks awal dengan wildcard pada rute yang terdaftar', function () {
+        $matriks = ($this->muatMatriks)();
+
+        expect($matriks)->not->toBeEmpty();
+
+        foreach ($matriks as $rute => $izin) {
+            expect($rute)->toMatch('/^(GET|POST|PUT|PATCH|DELETE) \/api\/v1\//')
+                ->and($izin)->toBe('*');
+        }
+
+        $terdaftar = collect(Route::getRoutes()->getRoutes())
+            ->flatMap(static fn ($rute): array => array_map(
+                static fn (string $metode): string => $metode.' /'.$rute->uri(),
+                array_diff($rute->methods(), ['HEAD', 'OPTIONS']),
+            ))
+            ->unique()
+            ->values()
+            ->all();
+
+        expect(array_diff(array_keys($matriks), $terdaftar))->toBe([]);
+    });
+
+    it('mencakup seluruh rute api yang dilindungi auth:sesi', function () {
+        $matriks = ($this->muatMatriks)();
+
+        $terlindung = collect(Route::getRoutes()->getRoutes())
+            ->filter(static fn ($rute): bool => in_array('auth:sesi', $rute->gatherMiddleware(), true))
+            ->flatMap(static fn ($rute): array => array_map(
+                static fn (string $metode): string => $metode.' /'.$rute->uri(),
+                array_diff($rute->methods(), ['HEAD', 'OPTIONS']),
+            ))
+            ->unique()
+            ->values()
+            ->all();
+
+        expect(array_keys($matriks))->toEqualCanonicalizing($terlindung);
     });
 
     it('mengizinkan pengguna yang memegang izin melalui perannya', function () {

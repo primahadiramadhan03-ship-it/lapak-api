@@ -25,7 +25,7 @@ final class PastikanIzin
         $izin = NamaIzin::tryFrom($namaIzin);
         $pengguna = $request->user();
 
-        if ($izin === null || ! $pengguna instanceof Pengguna || ! $this->pemeriksa->boleh($pengguna, $izin)) {
+        if ($izin === null || ! $pengguna instanceof Pengguna || ! $this->pemeriksa->punya($pengguna, $izin)) {
             throw new AuthorizationException;
         }
 
