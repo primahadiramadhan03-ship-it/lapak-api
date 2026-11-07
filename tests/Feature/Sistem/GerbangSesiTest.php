@@ -6,7 +6,9 @@ use App\Services\PenerbitSesi;
 
 describe('Gerbang Sesi', function () {
     beforeEach(function () {
-        $this->andi = Pengguna::factory()->create(['status' => StatusAkun::Aktif]);
+        beforeEach(function () {
+            $this->andi = Pengguna::factory()->pembeli()->create(['status' => StatusAkun::Aktif]);
+        });
     });
 
     it('menolak akses /api/v1/keranjang tanpa auth:sesi', function () {
