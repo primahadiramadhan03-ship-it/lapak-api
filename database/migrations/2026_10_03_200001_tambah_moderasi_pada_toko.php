@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Jejak keputusan moderasi terakhir: siapa, kapan, dan mengapa.
+     */
+    public function up(): void
+    {
+        Schema::table('toko', function (Blueprint $tabel): void {
+            $tabel->foreignId('dimoderasi_oleh')->nullable()->constrained('pengguna')->nullOnDelete();
+            $tabel->timestamp('dimoderasi_pada')->nullable();
+            $tabel->string('catatan_moderasi', 300)->nullable();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('toko', function (Blueprint $tabel): void {
+            $tabel->dropConstrainedForeignId('dimoderasi_oleh');
+            $tabel->dropColumn(['dimoderasi_pada', 'catatan_moderasi']);
+        });
+    }
+};
