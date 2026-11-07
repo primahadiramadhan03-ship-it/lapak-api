@@ -2,9 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Enums\NamaIzin;
 use App\Enums\StatusAkun;
 use App\Models\Pengguna;
+use Database\Seeders\PeranIzinSeeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+
+beforeEach(function () {
+    $this->seed(PeranIzinSeeder::class);
+});
 
 function dataRegistrasi(array $tambahan = []): array
 {
@@ -107,9 +114,49 @@ it('mengembalikan amplop respons yang sesuai kontrak', function () {
                 'telepon',
                 'status',
                 'terdaftar_pada',
+                'peran',
             ],
             'meta',
         ])
         ->assertJsonPath('sukses', true)
-        ->assertJsonPath('data.status', 'aktif');
+        ->assertJsonPath('data.status', 'aktif')
+        ->assertJsonPath('data.peran', ['pembeli']);
+});
+
+// =====================================================
+// Tiga pengujian tambahan B1
+// =====================================================
+
+it('memberi peran pembeli kepada setiap pendaftar, dan hanya itu', function () {
+    $this->postJson('/api/v1/registrasi', dataRegistrasi())
+        ->assertCreated()
+        ->assertJsonPath('data.peran', ['pembeli']);
+
+    $dewi = Pengguna::sole();
+
+    expect($dewi->punyaIzin(NamaIzin::KeranjangKelola))->toBeTrue()
+        ->and($dewi->punyaIzin(NamaIzin::ProdukKelola))->toBeFalse();
+});
+
+it('mengabaikan peran yang diselipkan klien saat mendaftar', function (mixed $peran) {
+    $this->postJson('/api/v1/registrasi', dataRegistrasi([
+        'peran' => $peran,
+    ]))
+        ->assertCreated()
+        ->assertJsonPath('data.peran', ['pembeli']);
+})->with([
+    'teks' => ['admin'],
+    'larik' => [['admin', 'keuangan']],
+]);
+
+it('tidak meninggalkan akun tanpa peran bila pemberian peran gagal', function () {
+    // Meniru kondisi server yang belum memiliki data peran.
+    DB::table('peran')->delete();
+
+    $this->postJson('/api/v1/registrasi', dataRegistrasi())
+        ->assertStatus(500)
+        ->assertJsonPath('galat.kode', 'GALAT_SERVER');
+
+    // Transaksi harus membatalkan pembuatan akun.
+    expect(Pengguna::count())->toBe(0);
 });

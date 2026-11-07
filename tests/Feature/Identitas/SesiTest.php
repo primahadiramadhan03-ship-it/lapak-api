@@ -1,11 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Pengguna;
 use App\Models\Sesi;
 use App\Services\PenerbitSesi;
+use Database\Seeders\PeranIzinSeeder;
 
 beforeEach(function () {
-    $this->sri = Pengguna::factory()->create(['kata_sandi' => 'BatikSolo2026']);
+    $this->seed(PeranIzinSeeder::class);
+
+    $this->sri = Pengguna::factory()->create([
+        'kata_sandi' => 'BatikSolo2026',
+    ]);
+
     $this->terbit = fn (Pengguna $pengguna, string $perangkat) => app(PenerbitSesi::class)
         ->terbitkan($pengguna, $perangkat);
 });
@@ -19,6 +27,20 @@ it('menjawab siapa saya tanpa membocorkan kata sandi maupun hash kunci', functio
 
     expect($respons->getContent())
         ->not->toContain('kata_sandi', 'hash_kunci', $this->sesiUji->hash_kunci);
+});
+
+it('menyertakan peran dan izin pengguna pada jawaban siapa saya', function () {
+    $pembeli = Pengguna::factory()->pembeli()->create();
+
+    $respons = $this->sebagai($pembeli)
+        ->getJson('/api/v1/saya')
+        ->assertOk()
+        ->assertJsonPath('data.pengguna.peran', ['pembeli']);
+
+    expect($respons->json('data.izin'))
+        ->toContain('keranjang.kelola')
+        ->toContain('toko.buka')
+        ->not->toContain('produk.kelola');
 });
 
 it('mencabut hanya sesi yang sedang dipakai saat keluar', function () {
@@ -84,7 +106,8 @@ it('menyegarkan sesi dan mengganti kuncinya setelah kata sandi dikonfirmasi', fu
         ->assertJsonPath('data.sesi.segar', true)
         ->json('data.kunci');
 
-    expect($kunciBaru)->not->toBe($kunciLama)->and(Sesi::count())->toBe(1);
+    expect($kunciBaru)->not->toBe($kunciLama)
+        ->and(Sesi::count())->toBe(1);
 
     $this->denganKunci($kunciLama)->getJson('/api/v1/saya')->assertUnauthorized();
     $this->denganKunci($kunciBaru)->getJson('/api/v1/saya')->assertOk();
@@ -104,10 +127,12 @@ it('membatasi tebakan kata sandi lewat pintu konfirmasi', function () {
     $this->sebagai($this->sri, segar: false);
 
     foreach (range(1, 5) as $ke) {
-        $this->postJson('/api/v1/sesi/konfirmasi', ['kata_sandi' => "tebakan-{$ke}"])
-            ->assertUnprocessable();
+        $this->postJson('/api/v1/sesi/konfirmasi', [
+            'kata_sandi' => "tebakan-{$ke}",
+        ])->assertUnprocessable();
     }
 
-    $this->postJson('/api/v1/sesi/konfirmasi', ['kata_sandi' => 'BatikSolo2026'])
-        ->assertTooManyRequests();
+    $this->postJson('/api/v1/sesi/konfirmasi', [
+        'kata_sandi' => 'BatikSolo2026',
+    ])->assertTooManyRequests();
 });
