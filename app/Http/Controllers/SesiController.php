@@ -9,6 +9,7 @@ use App\Http\Requests\KonfirmasiSandiRequest;
 use App\Http\Resources\PenggunaResource;
 use App\Http\Resources\SesiResource;
 use App\Models\Sesi;
+use App\Services\PemeriksaIzin;
 use App\Services\PemeriksaKataSandi;
 use App\Services\PenerbitSesi;
 use Illuminate\Http\JsonResponse;
@@ -18,11 +19,19 @@ final class SesiController extends Controller
 {
     public function __construct(private readonly PenerbitSesi $penerbit) {}
 
-    /** GET /saya: siapa saya, dan lewat sesi yang mana. */
-    public function saya(Request $request): JsonResponse
-    {
+    /**
+     * GET /saya: siapa saya, apa yang boleh saya lakukan,
+     * dan lewat sesi yang mana.
+     */
+    public function saya(
+        Request $request,
+        PemeriksaIzin $izin
+    ): JsonResponse {
+        $pengguna = $request->user();
+
         return $this->sukses([
-            'pengguna' => PenggunaResource::make($request->user()),
+            'pengguna' => PenggunaResource::make($pengguna->load('peran')),
+            'izin' => $izin->daftar($pengguna),
             'sesi' => SesiResource::make(Sesi::dariPermintaan($request)),
         ]);
     }

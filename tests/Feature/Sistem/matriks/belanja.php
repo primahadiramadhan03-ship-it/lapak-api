@@ -1,11 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
-// Matriks otorisasi domain belanja. Nilai '*' berarti semua pengguna masuk.
+/*
+| Matriks otorisasi domain D3 Keranjang dan Pesanan.
+| Kunci: "METODE alamat". Nilai: daftar peran yang boleh, atau '*' untuk siapa pun yang sudah masuk.
+|
+| Penjual tidak tertulis, tetapi penjual di Lapak selalu juga memegang peran pembeli.
+| Matriks menguji SATU peran setiap kali: akun yang hanya penjual memang ditolak.
+*/
 return [
-    'GET /api/v1/keranjang' => '*',
-    'DELETE /api/v1/keranjang' => '*',
-    'PUT /api/v1/keranjang/butir/{produkId}' => '*',
-    'DELETE /api/v1/keranjang/butir/{produkId}' => '*',
+    'GET /api/v1/keranjang' => ['pembeli'],
+    'DELETE /api/v1/keranjang' => ['pembeli'],
+    'PUT /api/v1/keranjang/butir/{produkId}' => ['pembeli'],
+    'DELETE /api/v1/keranjang/butir/{produkId}' => ['pembeli'],
 ];

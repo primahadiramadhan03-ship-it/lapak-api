@@ -121,9 +121,9 @@ describe('Matriks Otorisasi', function () {
         ($this->lampirkanPeran)($pengguna, NamaPeran::Auditor);
 
         expect(app(PemeriksaIzin::class)->daftar($pengguna))->toEqualCanonicalizing([
-            NamaIzin::TokoModerasi,
-            NamaIzin::PeranKelola,
-            NamaIzin::BukuBesarLihat,
+            NamaIzin::TokoModerasi->value,
+            NamaIzin::PeranKelola->value,
+            NamaIzin::BukuBesarLihat->value,
         ]);
     });
 
@@ -159,15 +159,20 @@ describe('Matriks Otorisasi', function () {
             'dompet.php',
         ]);
     });
-
     it('mengisi matriks awal dengan wildcard pada rute yang terdaftar', function () {
         $matriks = ($this->muatMatriks)();
 
         expect($matriks)->not->toBeEmpty();
 
+        $dikenal = array_map(static fn (NamaPeran $peran): string => $peran->value, NamaPeran::cases());
+
         foreach ($matriks as $rute => $izin) {
-            expect($rute)->toMatch('/^(GET|POST|PUT|PATCH|DELETE) \/api\/v1\//')
-                ->and(is_array($izin) || $izin === '*')->toBeTrue();
+            expect($rute)->toMatch('/^(GET|POST|PUT|PATCH|DELETE) \/api\/v1\//');
+
+            if ($izin !== '*') {
+                expect($izin)->toBeArray()
+                    ->and(array_diff($izin, $dikenal))->toBeEmpty();
+            }
         }
 
         $terdaftar = collect(Route::getRoutes()->getRoutes())
