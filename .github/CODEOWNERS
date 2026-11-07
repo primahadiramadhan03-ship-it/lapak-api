@@ -9,6 +9,11 @@
 /app/Services/PemeriksaKataSandi.php @primahadiramadhan03-ship-it
 /app/Http/Controllers/MasukController.php @primahadiramadhan03-ship-it
 /app/Http/Controllers/SesiController.php @primahadiramadhan03-ship-it
+/app/Services/PengelolaPeran.php @primahadiramadhan03-ship-it
+/app/Http/Controllers/PeranPenggunaController.php @primahadiramadhan03-ship-it
+/app/Policies/PenggunaPolicy.php @primahadiramadhan03-ship-it
+/app/Console/Commands/BeriPeran.php @primahadiramadhan03-ship-it
+/database/factories/PenggunaFactory.php @primahadiramadhan03-ship-it
 /routes/api/identitas.php @primahadiramadhan03-ship-it
 /tests/Feature/Identitas/ @primahadiramadhan03-ship-it
 /config/auth.php @primahadiramadhan03-ship-it
@@ -19,6 +24,9 @@
 /app/Models/Produk.php @Syafiq-web
 /app/Http/Controllers/TokoSayaController.php @Syafiq-web
 /app/Http/Controllers/ProdukSayaController.php @Syafiq-web
+/app/Services/ModerasiToko.php @Syafiq-web
+/app/Http/Controllers/ModerasiTokoController.php @Syafiq-web
+/app/Policies/TokoPolicy.php @Syafiq-web
 /routes/api/katalog.php @Syafiq-web
 /tests/Feature/KatalogTest.php @Syafiq-web
 
@@ -37,6 +45,7 @@
 /app/Services/BukuBesar.php @risayulia
 /app/Console/Commands/PeriksaBuku.php @risayulia
 /app/Http/Controllers/DompetController.php @risayulia
+/app/Http/Controllers/BukuBesarController.php @risayulia
 /routes/api/dompet.php @risayulia
 /tests/Feature/Dompet/ @risayulia
 /database/migrations/*_4000*.php @risayulia
@@ -57,6 +66,13 @@
 /tests/Pest.php @Sultanil
 /tests/Feature/Sistem/ @Sultanil
 /app/Console/Commands/PangkasSesi.php @Sultanil
+/app/Enums/NamaPeran.php @Sultanil
+/app/Enums/NamaIzin.php @Sultanil
+/app/Models/Peran.php @Sultanil
+/app/Models/Izin.php @Sultanil
+/app/Services/PemeriksaIzin.php @Sultanil
+/app/Console/Commands/MatriksIzin.php @Sultanil
+/database/seeders/PeranIzinSeeder.php @Sultanil
 
 # Seeder bersama
 /database/seeders/DatabaseSeeder.php @Sultanil
@@ -74,9 +90,9 @@
 /docs/domain/D4-dompet.md @risayulia
 
 # Berkas yang dikelola integrator
-/.github/CODEOWNERS @Syafiq-web
-/docs/ATURAN-BISNIS.md @Syafiq-web
-/docs/sesi/ @Syafiq-web
+/.github/CODEOWNERS @Ramadana-Brilliant-Jaya
+/docs/ATURAN-BISNIS.md @Ramadana-Brilliant-Jaya
+/docs/sesi/ @Ramadana-Brilliant-Jaya
 
 # Pengecualian. Pada CODEOWNERS, pola yang cocok PALING AKHIR yang menang,
 # jadi pengecualian ditulis di bawah aturan umumnya.
