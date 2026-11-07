@@ -9,6 +9,7 @@ use App\Models\Izin;
 use App\Models\Pengguna;
 use App\Models\Peran;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Menjawab satu pertanyaan pada setiap pemeriksaan otorisasi:
@@ -41,10 +42,29 @@ final class PemeriksaIzin
     }
 
     /**
-     * Hook ingatan izin. A1 belum menyimpan cache; B2 akan mengisinya.
+     * Ambil daftar izin dengan cache 5 menit. Dipanggil oleh middleware otorisasi.
+     *
+     * @return list<NamaIzin>
+     */
+    public function daftarDiingat(Pengguna $pengguna): array
+    {
+        return Cache::remember(
+            $this->kunciIzin($pengguna),
+            60 * 5,
+            fn () => $this->daftar($pengguna),
+        );
+    }
+
+    /**
+     * Hook ingatan izin. Dipanggil saat peran berubah (beri/cabut).
      */
     public function lupakan(Pengguna $pengguna): void
     {
-        // Hook B2: ingatan izin belum disimpan pada A1.
+        Cache::forget($this->kunciIzin($pengguna));
+    }
+
+    private function kunciIzin(Pengguna $pengguna): string
+    {
+        return 'izin:pengguna:' . $pengguna->getKey();
     }
 }
