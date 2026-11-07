@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\NamaPeran;
 use App\Models\ButirKeranjang;
 use App\Models\Keranjang;
 use App\Models\Pengguna;
@@ -18,7 +19,8 @@ function isiKeranjang(Pengguna $pengguna, Produk $produk, int $kuantitas): void
 
 beforeEach(function () {
     $this->andi = Pengguna::factory()->pembeli()->create();
-    $this->sri = Pengguna::factory()->penjual()->create();
+    // Bu Sri memegang peran pembeli sekaligus penjual (pemilik toko)
+    $this->sri = Pengguna::factory()->denganPeran(NamaPeran::Pembeli, NamaPeran::Penjual)->create();
     $this->batik = Toko::factory()->for($this->sri, 'pemilik')->create([
         'nama' => 'Batik Bu Sri',
         'ongkir_rupiah' => 12_000,
@@ -112,6 +114,7 @@ it('tidak menyimpan harga kiriman klien di mana pun (LP-6)', function () {
 });
 
 it('menolak penjual yang memasukkan produk tokonya sendiri (LP-5)', function () {
+    // Bu Sri memegang peran pembeli (lolos izin keranjang.kelola) dan peran penjual (pemilik toko)
     $this->sebagai($this->sri)->putJson("/api/v1/keranjang/butir/{$this->kain->id}", ['kuantitas' => 1])
         ->assertUnprocessable()
         ->assertJsonPath('galat.kode', 'LP-5');
