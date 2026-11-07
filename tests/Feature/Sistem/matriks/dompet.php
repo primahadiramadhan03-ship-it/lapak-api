@@ -2,8 +2,14 @@
 
 declare(strict_types=1);
 
-// Matriks otorisasi domain dompet. Nilai '*' berarti semua pengguna masuk.
+/*
+| Matriks otorisasi domain D4 Pembayaran dan Saldo.
+| Kunci: "METODE alamat". Nilai: daftar peran yang boleh, atau '*' untuk siapa pun yang sudah masuk.
+*/
 return [
-    'GET /api/v1/dompet' => '*',
-    'GET /api/v1/dompet/mutasi' => '*',
+    'GET /api/v1/dompet' => ['penjual'],
+    'GET /api/v1/dompet/mutasi' => ['penjual'],
+
+    'GET /api/v1/buku-besar/dompet' => ['keuangan', 'auditor'],
+    'GET /api/v1/buku-besar/dompet/{id}/mutasi' => ['keuangan', 'auditor'],
 ];

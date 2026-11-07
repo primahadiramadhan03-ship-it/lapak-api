@@ -7,14 +7,19 @@ use App\Models\MutasiSaldo;
 use App\Models\Pengguna;
 use App\Services\BukuBesar;
 use App\Services\PenerbitSesi;
+use Database\Seeders\PeranIzinSeeder;
 use Database\Seeders\TransaksiSeeder;
+
+beforeEach(function () {
+    $this->seed(PeranIzinSeeder::class);
+});
 
 it('menolak permintaan tanpa kunci sesi', function () {
     $this->getJson('/api/v1/dompet/mutasi')->assertUnauthorized();
 });
 
 it('menolak permintaan dengan sesi tidak segar', function () {
-    $pengguna = Pengguna::factory()->create();
+    $pengguna = Pengguna::factory()->penjual()->create();
 
     $this->sebagai($pengguna, segar: false)
         ->getJson('/api/v1/dompet/mutasi')
@@ -22,7 +27,7 @@ it('menolak permintaan dengan sesi tidak segar', function () {
 });
 
 it('menampilkan riwayat mutasi kosong untuk pengguna tanpa transaksi', function () {
-    $this->sebagai(Pengguna::factory()->create())
+    $this->sebagai(Pengguna::factory()->penjual()->create())
         ->getJson('/api/v1/dompet/mutasi')
         ->assertOk()
         ->assertJsonPath('sukses', true)
@@ -30,7 +35,7 @@ it('menampilkan riwayat mutasi kosong untuk pengguna tanpa transaksi', function 
 });
 
 it('menampilkan riwayat mutasi milik sendiri dengan pengurutan terbaru', function () {
-    $sri = Pengguna::factory()->create();
+    $sri = Pengguna::factory()->penjual()->create();
 
     $buku = app(BukuBesar::class);
 
@@ -93,8 +98,8 @@ it('menampilkan riwayat mutasi milik sendiri dengan pengurutan terbaru', functio
 });
 
 it('mengisolasi mutasi antar penjual', function () {
-    $sri = Pengguna::factory()->create();
-    $wulan = Pengguna::factory()->create();
+    $sri = Pengguna::factory()->penjual()->create();
+    $wulan = Pengguna::factory()->penjual()->create();
 
     $buku = app(BukuBesar::class);
 
@@ -124,7 +129,7 @@ it('mengisolasi mutasi antar penjual', function () {
 });
 
 it('menolak kunci sesi lama setelah rotasi dan menerima kunci baru', function () {
-    $pengguna = Pengguna::factory()->create();
+    $pengguna = Pengguna::factory()->penjual()->create();
     $buku = app(BukuBesar::class);
 
     $luar = Dompet::query()->where('jenis', JenisDompet::Eksternal)->first();

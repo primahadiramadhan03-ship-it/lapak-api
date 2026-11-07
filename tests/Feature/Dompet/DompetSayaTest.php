@@ -3,9 +3,16 @@
 use App\Domain\Uang;
 use App\Enums\JenisDompet;
 use App\Enums\JenisMutasi;
+use App\Enums\NamaPeran;
 use App\Models\Dompet;
 use App\Models\Pengguna;
 use App\Services\BukuBesar;
+use App\Services\PengelolaPeran;
+use Database\Seeders\PeranIzinSeeder;
+
+beforeEach(function () {
+    $this->seed(PeranIzinSeeder::class);
+});
 
 /**
  * Mengisi saldo seorang penjual lewat jalur resmi: dana masuk escrow, lalu dilepas.
@@ -32,7 +39,6 @@ function lepasDanaKe(Pengguna $penjual, int $rupiah, string $rujukan): void
     }
 
     $jumlah = Uang::dari($rupiah);
-    // ← PERBAIKAN: Kirim $jumlah->rupiah (integer), bukan objek Uang
     $buku->pindahkan($luar, $escrow, $jumlah->rupiah, JenisMutasi::DanaMasuk, $rujukan);
     $buku->pindahkan($escrow, $dompetPenjual, $jumlah->rupiah, JenisMutasi::LepasDana, $rujukan);
 }
@@ -41,8 +47,8 @@ it('menolak permintaan tanpa kunci sesi', function () {
     $this->getJson('/api/v1/dompet')->assertUnauthorized();
 });
 
-it('menampilkan saldo nol tanpa membuat dompet bagi pengguna tanpa transaksi', function () {
-    $this->sebagai(Pengguna::factory()->create())
+it('menampilkan saldo nol tanpa membuat dompet bagi penjual tanpa transaksi', function () {
+    $this->sebagai(Pengguna::factory()->penjual()->create())
         ->getJson('/api/v1/dompet')
         ->assertOk()
         ->assertExactJson([
@@ -58,8 +64,8 @@ it('menampilkan saldo nol tanpa membuat dompet bagi pengguna tanpa transaksi', f
 });
 
 it('menampilkan saldo milik sendiri dan bukan milik orang lain', function () {
-    $sri = Pengguna::factory()->create();
-    $wulan = Pengguna::factory()->create();
+    $sri = Pengguna::factory()->penjual()->create();
+    $wulan = Pengguna::factory()->penjual()->create();
 
     lepasDanaKe($sri, 363_500, 'LPK-UJI-1001');
     lepasDanaKe($wulan, 97_500, 'LPK-UJI-1002');
@@ -73,4 +79,24 @@ it('menampilkan saldo milik sendiri dan bukan milik orang lain', function () {
     $this->sebagai($wulan)
         ->getJson('/api/v1/dompet')
         ->assertJsonPath('data.saldo.rupiah', 97_500);
+});
+
+it('menutup pintu dompet bagi yang tidak memegang izin dompet.lihat', function (string $pemegang) {
+    $this->sebagai(Pengguna::factory()->{$pemegang}()->create());
+
+    $this->getJson('/api/v1/dompet')
+        ->assertForbidden()
+        ->assertJsonPath('galat.kode', 'DITOLAK');
+    $this->getJson('/api/v1/dompet/mutasi')->assertForbidden();
+})->with(['pembeli', 'admin', 'keuangan', 'auditor']);
+
+it('menutup dompet begitu peran penjual dicabut', function () {
+    $sri = Pengguna::factory()->penjual()->create();
+    $this->sebagai($sri)->getJson('/api/v1/dompet')->assertOk();
+
+    app(PengelolaPeran::class)->cabut($sri, NamaPeran::Penjual);
+
+    // Kunci lama mati bersama perannya. Setelah masuk ulang pun pintu dompet tertutup.
+    $this->getJson('/api/v1/dompet')->assertUnauthorized();
+    $this->sebagai($sri)->getJson('/api/v1/dompet')->assertForbidden();
 });
