@@ -22,6 +22,16 @@ final class PenggunaResource extends JsonResource
             'telepon' => $this->telepon,
             'status' => $this->status->value,
             'terdaftar_pada' => $this->created_at?->toIso8601String(),
+
+            // Hanya ditampilkan jika relasi peran sudah dimuat.
+            'peran' => $this->whenLoaded(
+                'peran',
+                fn () => $this->peran
+                    ->map(fn ($peran) => $peran->nama->value)
+                    ->sort()
+                    ->values()
+                    ->all(),
+            ),
         ];
     }
 }

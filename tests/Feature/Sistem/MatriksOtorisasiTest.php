@@ -165,9 +165,20 @@ describe('Matriks Otorisasi', function () {
 
         expect($matriks)->not->toBeEmpty();
 
+        $khususAdmin = [
+            'GET /api/v1/admin/pengguna' => ['admin'],
+            'PUT /api/v1/admin/pengguna/{id}/peran/{peran}' => ['admin'],
+            'DELETE /api/v1/admin/pengguna/{id}/peran/{peran}' => ['admin'],
+        ];
+
         foreach ($matriks as $rute => $izin) {
             expect($rute)->toMatch('/^(GET|POST|PUT|PATCH|DELETE) \/api\/v1\//')
-                ->and($izin)->toBe('*');
+                ->and($izin)->toBe($khususAdmin[$rute] ?? '*');
+        }
+
+        // Pastikan ketiga rute admin benar-benar tercantum.
+        foreach ($khususAdmin as $rute => $izin) {
+            expect($matriks)->toHaveKey($rute, $izin);
         }
 
         $terdaftar = collect(Route::getRoutes()->getRoutes())
