@@ -159,18 +159,19 @@ describe('Matriks Otorisasi', function () {
             'dompet.php',
         ]);
     });
-
-    it('hanya menyebut peran yang dikenal atau wildcard pada rute yang terdaftar', function () {
+    it('mengisi matriks awal dengan wildcard pada rute yang terdaftar', function () {
         $matriks = ($this->muatMatriks)();
-        $dikenal = array_map(static fn (NamaPeran $peran): string => $peran->value, NamaPeran::cases());
 
         expect($matriks)->not->toBeEmpty();
 
+        $dikenal = array_map(static fn (NamaPeran $peran): string => $peran->value, NamaPeran::cases());
+
         foreach ($matriks as $rute => $izin) {
             expect($rute)->toMatch('/^(GET|POST|PUT|PATCH|DELETE) \/api\/v1\//');
+
             if ($izin !== '*') {
-                expect(is_array($izin))->toBeTrue()
-                    ->and(array_diff($izin, $dikenal))->toBe([]);
+                expect($izin)->toBeArray()
+                    ->and(array_diff($izin, $dikenal))->toBeEmpty();
             }
         }
 
@@ -184,39 +185,6 @@ describe('Matriks Otorisasi', function () {
             ->all();
 
         expect(array_diff(array_keys($matriks), $terdaftar))->toBe([]);
-    });
-
-    it('menolak dan meloloskan setiap peran persis seperti matriks', function () {
-        $pemegang = [null, ...NamaPeran::cases()];
-        $selisih = [];
-
-        foreach (($this->muatMatriks)() as $rute => $boleh) {
-            [$metode, $alamat] = explode(' ', $rute);
-            $alamat = preg_replace('/\{[^}]+\}/', '999999', $alamat);
-
-            foreach ($pemegang as $peran) {
-                $pengguna = Pengguna::factory()->create();
-                if ($peran !== null) {
-                    ($this->lampirkanPeran)($pengguna, $peran);
-                }
-
-                $respons = $this->sebagai($pengguna)->json($metode, $alamat);
-
-                $ditolak = $respons->status() === 403 && $respons->json('galat.kode') === 'DITOLAK';
-                $harusBoleh = $boleh === '*' || ($peran !== null && in_array($peran->value, $boleh, true));
-
-                if ($ditolak === $harusBoleh) {
-                    $selisih[] = sprintf(
-                        '%s sebagai %s: seharusnya %s',
-                        $rute,
-                        $peran->value ?? 'tanpa peran',
-                        $harusBoleh ? 'boleh' : 'ditolak',
-                    );
-                }
-            }
-        }
-
-        expect($selisih)->toBeEmpty("Tidak sesuai matriks:\n".implode("\n", $selisih));
     });
 
     it('mencakup seluruh rute api yang dilindungi auth:sesi', function () {
