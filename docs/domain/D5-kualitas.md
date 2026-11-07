@@ -20,15 +20,24 @@
 | `routes/api/sistem.php` | Rute `GET /health` |
 | `config/lapak.php` | Kebijakan komisi, batas bayar, dan tahan dana |
 | `.github/workflows/ci.yml` | Gerbang kualitas pada setiap PR |
-| `tests/Feature/Sistem/` | Uji kontrak galat dan uji arsitektur |
+| `tests/Feature/Sistem/` | Uji kontrak galat, uji arsitektur, dan uji matriks otorisasi |
+| `app/Enums/NamaPeran.php` | Daftar peran dan matriks izin yang disepakati |
+| `app/Enums/NamaIzin.php` | Daftar izin beserta keterangannya |
+| `app/Models/Peran.php` | Model peran dan relasi ke pengguna serta izin |
+| `app/Models/Izin.php` | Model izin dan relasi ke peran |
+| `app/Services/PemeriksaIzin.php` | Menjawab apakah pengguna memegang suatu izin |
+| `app/Http/Middleware/PastikanIzin.php` | Middleware alias `izin:<nama>` |
+| `app/Console/Commands/MatriksIzin.php` | Perintah `lapak:matriks-izin` |
+| `database/seeders/PeranIzinSeeder.php` | Seeder peran, izin, dan pivot yang idempotent |
+| `tests/Feature/Sistem/matriks/` | Matriks rute per domain untuk pengujian otorisasi |
 
 ## 2. Tabel yang dimiliki
 
-Sesi 1 belum memiliki tabel. Rencana kepemilikan:
+Tabel D5 mulai berlaku pada Sesi 3:
 
 | Sesi | Tabel |
 |---|---|
-| 3 | `peran`, `izin`, `peran_pengguna`, `izin_peran` |
+| 3 | `peran`, `izin`, `pengguna_peran`, `peran_izin` |
 | 4 | `kunci_idempotensi` |
 | 5 | `log_audit` |
 
@@ -45,6 +54,8 @@ Sesi 1 belum memiliki tabel. Rencana kepemilikan:
 - `GalatDomain($kode, $pesan, $statusHttp, $rincian)` untuk pelanggaran aturan bisnis.
 - Bentuk galat JSON yang seragam, termasuk 404 tanpa header `Accept`.
 - Header `X-Request-Id` pada setiap respons.
+- Middleware `izin:<nama>` untuk menjaga rute yang menuntut izin tertentu.
+- Perintah `php artisan lapak:matriks-izin` untuk menampilkan matriks peran dan izin.
 - Gerbang CI: Pint, migrasi + seeder dari basis data kosong, dan Pest.
 
 ## 5. Yang dibutuhkan dari domain lain

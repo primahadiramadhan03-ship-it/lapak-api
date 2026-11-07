@@ -11,3 +11,18 @@
   - Membaca ulang dokumen dan mencocokkannya dengan struktur repo serta kode yang sudah ada.
   - Menjalankan `docker compose ps` dan `curl http://localhost:8000/api/v1/tes` untuk memastikan aplikasi berjalan.
   - Memeriksa `git diff` dan `git status` sebelum setiap commit agar tidak ada berkas yang salah ikut.
+
+## Sesi 3 — A1 Kontrak Izin dan Matriks Otorisasi
+
+**Bagian yang dibantu**:
+  - Menyusun enum `NamaPeran` dan `NamaIzin` sebagai sumber kebenaran matriks izin.
+  - Menyusun model `Peran` dan `Izin`, migration pivot, serta `PeranIzinSeeder` yang idempotent.
+  - Menyusun `PemeriksaIzin`, middleware `PastikanIzin` dengan alias `izin:<nama>`, dan command `lapak:matriks-izin`.
+  - Menyusun `MatriksOtorisasiTest` untuk memeriksa kesesuaian matriks, seeder, middleware, dan command.
+  - Menyesuaikan prioritas middleware, nama tabel pivot, kontrak method, folder matriks domain, dan bagian Otorisasi di `KONTRAK-API.md` berdasarkan review A1.
+
+**Cara memverifikasi hasil**:
+  - Menjalankan `php artisan test --filter=MatriksOtorisasiTest` sampai seluruh kasus lulus.
+  - Menjalankan `php artisan test` untuk memastikan seluruh pengujian tetap hijau.
+  - Menjalankan `php artisan lapak:matriks-izin` dan mencocokkan keluarannya dengan tabel matriks di `docs/sesi/SESI-3.md`.
+  - Menjalankan `vendor/bin/pint --test` untuk memastikan gaya kode sesuai.

@@ -3,11 +3,13 @@
 use App\Exceptions\PenanganGalatApi;
 use App\Http\Middleware\IdPermintaan;
 use App\Http\Middleware\PaksaJson;
+use App\Http\Middleware\PastikanIzin;
 use App\Http\Middleware\SesiSegar;
 use App\Http\Middleware\TanpaCache;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,7 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [PaksaJson::class, IdPermintaan::class, TanpaCache::class]);
         $middleware->alias([
             'sesi.segar' => SesiSegar::class,
+            'izin' => PastikanIzin::class,
         ]);
+        $middleware->prependToPriorityList(
+            before: SubstituteBindings::class,
+            prepend: PastikanIzin::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(PenanganGalatApi::tangani(...));
