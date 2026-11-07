@@ -8,6 +8,7 @@ use App\Enums\NamaIzin;
 use App\Enums\NamaPeran;
 use App\Models\Izin;
 use App\Models\Peran;
+use App\Services\PemeriksaIzin;
 use Illuminate\Database\Seeder;
 
 class PeranIzinSeeder extends Seeder
@@ -31,5 +32,8 @@ class PeranIzinSeeder extends Seeder
                 $nama->izinBawaan(),
             ));
         }
+
+        // Pemetaan mungkin baru saja berubah: izin yang telanjur diingat tidak boleh dipakai lagi.
+        app(PemeriksaIzin::class)->lupakanSemua();
     }
 }

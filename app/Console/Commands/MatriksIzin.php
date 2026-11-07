@@ -7,36 +7,32 @@ namespace App\Console\Commands;
 use App\Enums\NamaIzin;
 use App\Enums\NamaPeran;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
+/** Mencetak peran x izin seperti yang tersimpan di basis data, bukan yang tertulis di enum. */
 final class MatriksIzin extends Command
 {
     protected $signature = 'lapak:matriks-izin';
 
-    protected $description = 'Menampilkan matriks izin per peran';
+    protected $description = 'Menampilkan izin setiap peran menurut isi basis data';
 
     public function handle(): int
     {
-        $peran = NamaPeran::cases();
-        $baris = [];
+        $punya = DB::table('peran_izin')
+            ->join('peran', 'peran.id', '=', 'peran_izin.peran_id')
+            ->join('izin', 'izin.id', '=', 'peran_izin.izin_id')
+            ->get(['peran.nama as peran', 'izin.nama as izin'])
+            ->map(fn (object $baris) => "{$baris->peran}|{$baris->izin}")
+            ->flip();
 
-        foreach (NamaIzin::cases() as $izin) {
-            $baris[] = [
-                'izin' => $izin->value,
-                ...array_combine(
-                    array_map(static fn (NamaPeran $nama): string => $nama->value, $peran),
-                    array_map(
-                        static fn (NamaPeran $nama): string => in_array($izin, $nama->izinBawaan(), true) ? 'v' : '-',
-                        $peran,
-                    ),
-                ),
-                'keterangan' => $izin->keterangan(),
-            ];
-        }
+        $peran = array_map(fn (NamaPeran $p) => $p->value, NamaPeran::cases());
 
-        $this->table(
-            ['Izin', ...array_map(static fn (NamaPeran $nama): string => $nama->value, $peran), 'Keterangan'],
-            $baris,
-        );
+        $baris = array_map(fn (NamaIzin $izin) => [
+            $izin->value,
+            ...array_map(fn (string $p) => $punya->has("{$p}|{$izin->value}") ? 'v' : '', $peran),
+        ], NamaIzin::cases());
+
+        $this->table(['izin', ...$peran], $baris);
 
         return self::SUCCESS;
     }
