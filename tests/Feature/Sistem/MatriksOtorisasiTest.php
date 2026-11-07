@@ -121,9 +121,9 @@ describe('Matriks Otorisasi', function () {
         ($this->lampirkanPeran)($pengguna, NamaPeran::Auditor);
 
         expect(app(PemeriksaIzin::class)->daftar($pengguna))->toEqualCanonicalizing([
-            NamaIzin::TokoModerasi,
-            NamaIzin::PeranKelola,
-            NamaIzin::BukuBesarLihat,
+            NamaIzin::TokoModerasi->value,
+            NamaIzin::PeranKelola->value,
+            NamaIzin::BukuBesarLihat->value,
         ]);
     });
 
