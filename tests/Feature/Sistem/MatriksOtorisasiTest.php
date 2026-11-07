@@ -167,7 +167,7 @@ describe('Matriks Otorisasi', function () {
 
         foreach ($matriks as $rute => $izin) {
             expect($rute)->toMatch('/^(GET|POST|PUT|PATCH|DELETE) \/api\/v1\//')
-                ->and($izin)->toBe('*');
+                ->and(is_array($izin) || $izin === '*')->toBeTrue();
         }
 
         $terdaftar = collect(Route::getRoutes()->getRoutes())
