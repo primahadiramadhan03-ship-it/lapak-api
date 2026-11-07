@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\NamaPeran;
 use App\Models\Kategori;
 use App\Models\Pengguna;
 use App\Models\Produk;
 use App\Models\Toko;
+use App\Services\PengelolaPeran;
 use Illuminate\Database\Seeder;
 
 final class KatalogSeeder extends Seeder
@@ -27,6 +29,8 @@ final class KatalogSeeder extends Seeder
             'kota' => 'Surakarta',
             'status' => 'aktif',
         ]);
+
+        app(PengelolaPeran::class)->beri($pengguna, NamaPeran::Penjual);
 
         foreach ($kategori as $kat) {
             Produk::factory()->count(3)->for($toko)->for($kat)->create();
