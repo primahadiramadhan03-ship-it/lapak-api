@@ -65,6 +65,6 @@ final class PemeriksaIzin
 
     private function kunciIzin(Pengguna $pengguna): string
     {
-        return 'izin:pengguna:' . $pengguna->getKey();
+        return "izin:pengguna:{$pengguna->getKey()}";
     }
 }

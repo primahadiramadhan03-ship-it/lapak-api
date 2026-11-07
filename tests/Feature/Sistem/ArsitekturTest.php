@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\Peran;
+
 test('arsitektur: seluruh migration dilarang menggunakan float, double, atau decimal (LP-1)', function () {
     $berkasMigrasi = glob(database_path('migrations/*.php')) ?: [];
 
@@ -18,16 +20,16 @@ test('arsitektur: seluruh migration dilarang menggunakan float, double, atau dec
 });
 
 test('arsitektur: peran hanya dapat diubah melalui PengelolaPeran (B2)', function () {
-    $peranModel = new \App\Models\Peran();
-    $reflection = new \ReflectionClass($peranModel);
+    $peranModel = new Peran;
+    $reflection = new ReflectionClass($peranModel);
 
     // Peran model hanya boleh punya BelongsToMany relations
-    $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+    $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
     $relationMethods = [];
-    
+
     foreach ($methods as $method) {
         $returnType = $method->getReturnType();
-        if ($returnType && strpos((string)$returnType, 'BelongsToMany') !== false) {
+        if ($returnType && strpos((string) $returnType, 'BelongsToMany') !== false) {
             $relationMethods[] = $method->getName();
         }
     }
@@ -39,11 +41,11 @@ test('arsitektur: peran hanya dapat diubah melalui PengelolaPeran (B2)', functio
     // Verifikasi Peran model tidak punya save/update/delete yang override parent
     $publicMethods = array_map(fn ($m) => $m->getName(), $methods);
     $forbiddenMethods = ['save', 'delete', 'update', 'create', 'forceCreate', 'firstOrCreate', 'updateOrCreate'];
-    
+
     foreach ($forbiddenMethods as $forbidden) {
-        $hasForbidden = in_array($forbidden, $publicMethods) && 
-            $reflection->getMethod($forbidden)->getDeclaringClass()->getName() === \App\Models\Peran::class;
-        
+        $hasForbidden = in_array($forbidden, $publicMethods) &&
+            $reflection->getMethod($forbidden)->getDeclaringClass()->getName() === Peran::class;
+
         expect($hasForbidden)->toBeFalse(
             "Peran model tidak boleh override method {$forbidden}. Gunakan PengelolaPeran untuk modifikasi."
         );
