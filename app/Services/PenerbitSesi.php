@@ -69,6 +69,14 @@ final class PenerbitSesi
         ])->save();
     }
 
+    public function cabutSemua(Pengguna $pengguna): int
+    {
+        return Sesi::query()
+            ->berlaku()
+            ->where('pengguna_id', $pengguna->id)
+            ->update(['dicabut_pada' => now()]);
+    }
+
     public function cabut(Sesi $sesi): void
     {
         if ($sesi->dicabut_pada === null) {
