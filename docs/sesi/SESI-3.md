@@ -12,7 +12,7 @@
 | #35 | B3 | `sesi-3/moderasi-toko-bagas` | Bagas (Syafiq) | Izin toko dan produk, moderasi oleh admin | Sekar (Jaya) | #33 | Merged |
 | #36 | B4 | `sesi-3/gerbang-keranjang-brilliant` | Rani (Brili) | Izin keranjang, aturan status pesanan | Bambang (Prima) | #33 | Merged |
 | #34 | B5 | `sesi-3/buku-besar-dimas` | Dimas (Risa) | Izin dompet, buku besar untuk staf | Bagas (Syafiq) | #33 | Merged |
-| #39 | Penutup | `sesi-3/penutup-rani` | Rani (Brili) | Papan integrasi final, refleksi sesi, serah terima Sesi 4 | Bambang (Prima), Dimas (Risa) | #34 | Siap Review |
+| #39 | Penutup | `sesi-3/penutup-rani` | Rani (Brili) | Papan integrasi final, refleksi sesi, serah terima Sesi 4 | Bambang (Prima), Dimas (Risa), Sekar (Jaya) | #34 | Siap Review |
 
 ---
 
@@ -57,7 +57,7 @@ Kelima PR dibuka secara paralel dari `main` setelah A2 masuk. Urutan merge ke `m
 
 Rani (Brilliant) sebagai Integrator Utama Sesi 3 mencatat hasil verifikasi bersama tim:
 1. **Status Uji & Kualitas Kode**:
-   - Seluruh **275 pengujian (Pest)** berhasil lulus 100% (*passed*).
+   - Seluruh **278 pengujian (Pest)** berhasil lulus 100% (*passed*).
    - Format kode (**Laravel Pint**) bersih tanpa pelanggaran (*0 style issues*).
    - Buku besar saldo dipastikan tetap seimbang.
 2. **Penegakan Matriks Otorisasi**:
