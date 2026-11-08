@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AlamatController;
 use App\Http\Controllers\MasukController;
 use App\Http\Controllers\PeranPenggunaController;
 use App\Http\Controllers\RegistrasiController;
@@ -33,6 +34,15 @@ Route::middleware('auth:sesi')->group(function (): void {
     Route::delete('sesi/{pengenal}', [SesiController::class, 'destroy'])
         ->middleware('sesi.segar')
         ->name('sesi.destroy');
+
+    // Alamat hanya dapat diakses pembeli yang memiliki izin pesanan.buat.
+    Route::middleware('izin:pesanan.buat')
+        ->prefix('alamat')
+        ->name('alamat.')
+        ->group(function (): void {
+            Route::get('/', [AlamatController::class, 'index'])
+                ->name('index');
+        });
 
     // Pintu admin untuk mengelola peran pengguna.
     Route::middleware('izin:peran.kelola')
