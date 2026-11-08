@@ -133,7 +133,7 @@ berurutan pada rute yang tidak terbuka untuk publik.
 
 | Peran | Izin bawaan |
 |---|---|
-| `pembeli` | `keranjang.kelola`, `toko.buka` |
+| `pembeli` | `keranjang.kelola`, `toko.buka`, `pesanan.buat` |
 | `penjual` | `produk.kelola`, `dompet.lihat` |
 | `admin` | `toko.moderasi`, `peran.kelola` |
 | `keuangan` | `buku-besar.lihat` |
