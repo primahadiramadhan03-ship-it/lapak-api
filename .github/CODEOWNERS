@@ -1,7 +1,7 @@
 # Pemilik berkas otomatis diminta meninjau setiap PR yang menyentuh berkasnya.
 # Berkas ini hanya disunting integrator, pada unggahan pembuka tiap sesi.
 
-# D1 Identitas dan Sesi (Prima)
+# D1 Identitas dan Sesi (Prima / Bambang)
 /app/Models/Pengguna.php @primahadiramadhan03-ship-it
 /app/Models/Sesi.php @primahadiramadhan03-ship-it
 /app/Services/PenerbitSesi.php @primahadiramadhan03-ship-it
@@ -17,8 +17,12 @@
 /routes/api/identitas.php @primahadiramadhan03-ship-it
 /tests/Feature/Identitas/ @primahadiramadhan03-ship-it
 /config/auth.php @primahadiramadhan03-ship-it
+/app/Models/Alamat.php @primahadiramadhan03-ship-it
+/app/Services/BukuAlamat.php @primahadiramadhan03-ship-it
+/app/Services/PenjagaTransaksi.php @primahadiramadhan03-ship-it
+/app/Http/Controllers/AlamatController.php @primahadiramadhan03-ship-it
 
-# D2 Toko dan Katalog (Syafiq)
+# D2 Toko dan Katalog (Syafiq / Bagas)
 /app/Models/Toko.php @Syafiq-web
 /app/Models/Kategori.php @Syafiq-web
 /app/Models/Produk.php @Syafiq-web
@@ -27,10 +31,11 @@
 /app/Services/ModerasiToko.php @Syafiq-web
 /app/Http/Controllers/ModerasiTokoController.php @Syafiq-web
 /app/Policies/TokoPolicy.php @Syafiq-web
+/app/Services/PenjagaStok.php @Syafiq-web
 /routes/api/katalog.php @Syafiq-web
 /tests/Feature/KatalogTest.php @Syafiq-web
 
-# D3 Keranjang dan Pesanan (Brili)
+# D3 Keranjang dan Pesanan (Brili / Rani)
 /app/Domain/ @Ramadana-Brilliant-Jaya
 /app/Services/LayananKeranjang.php @Ramadana-Brilliant-Jaya
 /app/Models/Keranjang.php @Ramadana-Brilliant-Jaya
@@ -38,8 +43,18 @@
 /app/Http/Controllers/KeranjangController.php @Ramadana-Brilliant-Jaya
 /routes/api/belanja.php @Ramadana-Brilliant-Jaya
 /tests/Feature/Belanja/ @Ramadana-Brilliant-Jaya
+/app/Models/Checkout.php @Ramadana-Brilliant-Jaya
+/app/Models/Pesanan.php @Ramadana-Brilliant-Jaya
+/app/Models/ButirPesanan.php @Ramadana-Brilliant-Jaya
+/app/Services/GembokCheckout.php @Ramadana-Brilliant-Jaya
+/app/Services/MesinStatusPesanan.php @Ramadana-Brilliant-Jaya
+/app/Services/LayananCheckout.php @Ramadana-Brilliant-Jaya
+/app/Services/PembatalanOtomatis.php @Ramadana-Brilliant-Jaya
+/app/Http/Controllers/CheckoutController.php @Ramadana-Brilliant-Jaya
+/app/Http/Controllers/PesananSayaController.php @Ramadana-Brilliant-Jaya
+/app/Console/Commands/BatalkanKedaluwarsa.php @Ramadana-Brilliant-Jaya
 
-# D4 Pembayaran dan Saldo (Risa)
+# D4 Pembayaran dan Saldo (Risa / Dimas)
 /app/Models/Dompet.php @risayulia
 /app/Models/MutasiSaldo.php @risayulia
 /app/Services/BukuBesar.php @risayulia
@@ -49,8 +64,14 @@
 /routes/api/dompet.php @risayulia
 /tests/Feature/Dompet/ @risayulia
 /database/migrations/*_4000*.php @risayulia
+/app/Models/Pembayaran.php @risayulia
+/app/Services/LayananPembayaran.php @risayulia
+/app/Services/TandaTanganGateway.php @risayulia
+/app/Http/Controllers/WebhookPembayaranController.php @risayulia
+/app/Http/Controllers/PembayaranSayaController.php @risayulia
+/app/Console/Commands/SimulasiBayar.php @risayulia
 
-# D5 Otorisasi, Audit, dan Kualitas (Jaya)
+# D5 Otorisasi, Audit, dan Kualitas (Jaya / Sekar)
 /app/Exceptions/ @Sultanil
 /app/Http/Concerns/ @Sultanil
 /app/Http/Middleware/ @Sultanil
@@ -73,6 +94,10 @@
 /app/Services/PemeriksaIzin.php @Sultanil
 /app/Console/Commands/MatriksIzin.php @Sultanil
 /database/seeders/PeranIzinSeeder.php @Sultanil
+/app/Models/KunciIdempotensi.php @Sultanil
+/app/Console/Commands/Balapan.php @Sultanil
+/app/Console/Commands/BalapanAnak.php @Sultanil
+/app/Balapan/ @Sultanil
 
 # Seeder bersama
 /database/seeders/DatabaseSeeder.php @Sultanil
@@ -89,11 +114,17 @@
 /app/Exceptions/SaldoTidakCukup.php @risayulia
 /docs/domain/D4-dompet.md @risayulia
 
-# Berkas yang dikelola integrator
-/.github/CODEOWNERS @Ramadana-Brilliant-Jaya
-/docs/ATURAN-BISNIS.md @Ramadana-Brilliant-Jaya
-/docs/sesi/ @Ramadana-Brilliant-Jaya
+# Pengecualian skenario balapan (diletakkan di bawah aturan umum /app/Balapan/)
+/app/Balapan/AlamatPertama.php @primahadiramadhan03-ship-it
+/app/Balapan/RebutanStok.php @Syafiq-web
+/app/Balapan/PenyesuaianStok.php @Syafiq-web
+/app/Balapan/KeranjangGanda.php @Ramadana-Brilliant-Jaya
+/app/Balapan/WebhookGanda.php @risayulia
 
-# Pengecualian. Pada CODEOWNERS, pola yang cocok PALING AKHIR yang menang,
-# jadi pengecualian ditulis di bawah aturan umumnya.
+# Berkas yang dikelola integrator (Risa / Dimas di Sesi 4)
+/.github/CODEOWNERS @risayulia
+/docs/ATURAN-BISNIS.md @risayulia
+/docs/sesi/ @risayulia
+
+# Pengecualian domain sesi
 /app/Domain/Sesi/ @primahadiramadhan03-ship-it
