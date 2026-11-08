@@ -36,3 +36,18 @@
   - Menjalankan seluruh pengujian `./vendor/bin/pest` (208 passed).
   - Memeriksa gaya penulisan kode dengan `./vendor/bin/pint --test` (160 files passed).
   - Menjalankan `php artisan lapak:periksa-buku` untuk memastikan buku besar seimbang.
+
+
+## Sesi 4 — Pembuka: Papan Sesi dan Tangga Kunci
+
+- **Alat**: Google Gemini / Antigravity
+- **Bagian yang dibantu**:
+  - Memahami arsitektur konkurensi, isolasi transaksi `REPEATABLE-READ`, dan kebutuhan pengujian pada MySQL 8 InnoDB.
+  - Menyusun dokumen papan sesi `docs/sesi/SESI-4.md` (pemetaan 13 PR, alur Jendela A & B, mitigasi deadlock).
+  - Menyusun tabel Tangga Kunci Baris (Row Lock Hierarchy) dan 3 Aturan Emas pada `docs/PETA-SKEMA.md`.
+  - Memperbarui aturan kepemilikan berkas dan integrator pada `.github/CODEOWNERS`.
+- **Cara verifikasi**:
+  - Memeriksa kesesuaian berkas terhadap modul Hands-On Sesi 4 (Langkah 1).
+  - Memastikan konfigurasi database `lapak` dan `lapak_uji` berjalan dengan `REPEATABLE-READ`.
+  - Menjalankan `./vendor/bin/pint --test` (183 berkas lulus).
+  - Menjalankan seluruh pengujian `./vendor/bin/pest` di SQLite dan MySQL (278 passed).
