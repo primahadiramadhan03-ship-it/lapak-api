@@ -24,6 +24,7 @@ enum NamaPeran: string
             self::Pembeli => [
                 NamaIzin::KeranjangKelola,
                 NamaIzin::TokoBuka,
+                NamaIzin::PesananBuat,
             ],
             self::Penjual => [
                 NamaIzin::ProdukKelola,

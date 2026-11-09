@@ -50,6 +50,7 @@ describe('Matriks Otorisasi', function () {
             ->toBe([
                 'keranjang.kelola',
                 'toko.buka',
+                'pesanan.buat',
                 'produk.kelola',
                 'dompet.lihat',
                 'toko.moderasi',
@@ -62,6 +63,7 @@ describe('Matriks Otorisasi', function () {
         expect(NamaPeran::Pembeli->izinBawaan())->toEqualCanonicalizing([
             NamaIzin::KeranjangKelola,
             NamaIzin::TokoBuka,
+            NamaIzin::PesananBuat,
         ])->and(NamaPeran::Penjual->izinBawaan())->toEqualCanonicalizing([
             NamaIzin::ProdukKelola,
             NamaIzin::DompetLihat,

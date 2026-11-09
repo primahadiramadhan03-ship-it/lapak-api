@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Pengguna;
+use App\Models\Sesi;
 use App\Services\PemeriksaSesi;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -14,17 +15,11 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         // Di luar produksi, Eloquent menolak lazy loading, atribut yang belum dimuat,
@@ -58,7 +53,8 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Pembatas laju percobaan masuk dan konfirmasi kata sandi.
+     * Pembatas laju percobaan masuk, konfirmasi kata sandi,
+     * dan pintu transaksi.
      */
     private function daftarkanPembatasLaju(): void
     {
@@ -72,5 +68,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('konfirmasi', fn (Request $request) => Limit::perMinute(
             config('lapak.laju.konfirmasi'),
         )->by('konfirmasi:'.($request->user('sesi')?->id ?? $request->ip())));
+
+        // LP-15: pembatas transaksi menggunakan pengenal sesi, bukan alamat IP.
+        RateLimiter::for('transaksi', fn (Request $request) => Limit::perMinute(
+            config('lapak.transaksi.laju_per_menit'),
+        )->by('transaksi:'.Sesi::dariPermintaan($request)->pengenal));
     }
 }

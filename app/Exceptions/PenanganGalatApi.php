@@ -120,7 +120,7 @@ class PenanganGalatApi
                     'pesan' => 'Melebihi batas laju permintaan.',
                     'rincian' => null,
                 ],
-            ], 429);
+            ], 429, $e->getHeaders());
         }
 
         $statusCode = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
@@ -133,7 +133,7 @@ class PenanganGalatApi
                     'pesan' => 'Melebihi batas laju permintaan.',
                     'rincian' => null,
                 ],
-            ], 429);
+            ], 429, $e->getHeaders());
         }
 
         if ($statusCode === 503) {

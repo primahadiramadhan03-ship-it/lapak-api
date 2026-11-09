@@ -11,7 +11,10 @@ return [
     'POST /api/v1/sesi/konfirmasi' => '*',
     'DELETE /api/v1/sesi/{pengenal}' => '*',
 
-    // Pintu admin pengelolaan peran.
+    // Alamat hanya untuk pembeli.
+    'GET /api/v1/alamat' => ['pembeli'],
+
+    // Pintu admin.
     'GET /api/v1/admin/pengguna' => ['admin'],
     'PUT /api/v1/admin/pengguna/{id}/peran/{peran}' => ['admin'],
     'DELETE /api/v1/admin/pengguna/{id}/peran/{peran}' => ['admin'],

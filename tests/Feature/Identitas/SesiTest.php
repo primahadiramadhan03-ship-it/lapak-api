@@ -40,6 +40,7 @@ it('menyertakan peran dan izin pengguna pada jawaban siapa saya', function () {
     expect($respons->json('data.izin'))
         ->toContain('keranjang.kelola')
         ->toContain('toko.buka')
+        ->toContain('pesanan.buat')
         ->not->toContain('produk.kelola');
 });
 

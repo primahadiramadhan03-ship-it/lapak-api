@@ -26,6 +26,12 @@ return [
         'jeda_sentuh_detik' => 60,
     ],
 
+    'transaksi' => [
+        'batas_segar_rupiah' => (int) env('LAPAK_BATAS_SEGAR_RUPIAH', 2_000_000),
+        'laju_per_menit' => 10,
+        'alamat_maksimum' => 5,
+    ],
+
     'otorisasi' => [
         // Lama izin seorang pengguna diingat. Perubahan peran melupakannya saat itu juga;
         // angka ini hanya batas atas bila ada jalur yang lupa memanggil lupakan().
