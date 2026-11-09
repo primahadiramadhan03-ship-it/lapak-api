@@ -30,6 +30,15 @@
 | `app/Console/Commands/MatriksIzin.php` | Perintah `lapak:matriks-izin` |
 | `database/seeders/PeranIzinSeeder.php` | Seeder peran, izin, dan pivot yang idempotent |
 | `tests/Feature/Sistem/matriks/` | Matriks rute per domain untuk pengujian otorisasi |
+| `database/migrations/2026_10_04_500001_buat_tabel_kunci_idempotensi.php` | Skema tabel kunci idempotensi (LP-11) |
+| `app/Models/KunciIdempotensi.php` | Model catatan kunci idempotensi |
+| `app/Http/Middleware/Idempoten.php` | Middleware alias `idempoten` dan `idempoten:wajib` |
+| `app/Exceptions/KonflikIdempotensi.php` | Galat LP-11 jika kunci sama dipakai payload berbeda (409) |
+| `app/Exceptions/KunciIdempotensiDibutuhkan.php` | Galat LP-11 jika kunci wajib tidak disertakan (422) |
+| `app/Console/Commands/Balapan.php` | Perintah runner `lapak:balapan` |
+| `app/Console/Commands/BalapanAnak.php` | Perintah pekerja konkurensi `lapak:balapan:anak` |
+| `app/Balapan/` | Kontrak skenario, trait PanggilHttp, kalibrasi serempak, dan balapan |
+| `tests/Feature/Sistem/IdempotensiTest.php` | Pengujian kontrak idempotensi dan replay respons |
 
 ## 2. Tabel yang dimiliki
 
@@ -56,6 +65,8 @@ Tabel D5 mulai berlaku pada Sesi 3:
 - Header `X-Request-Id` pada setiap respons.
 - Middleware `izin:<nama>` untuk menjaga rute yang menuntut izin tertentu.
 - Perintah `php artisan lapak:matriks-izin` untuk menampilkan matriks peran dan izin.
+- Middleware `idempoten` untuk menjaga mutasi transaksi agar tidak dieksekusi ganda (LP-11).
+- Perintah `php artisan lapak:balapan` untuk menjalankan simulasi pengujian balapan konkurensi data.
 - Gerbang CI: Pint, migrasi + seeder dari basis data kosong, dan Pest.
 
 ## 5. Yang dibutuhkan dari domain lain
@@ -72,7 +83,7 @@ Tabel D5 mulai berlaku pada Sesi 3:
 | Kode | Penegakan |
 |---|---|
 | LP-1 | Uji arsitektur memindai migration dan menolak `float`/`double`/`decimal` |
-| LP-11 | Rencana Sesi 4: middleware idempoten dan tabel `kunci_idempotensi` |
+| LP-11 | Middleware idempoten dan tabel `kunci_idempotensi` dengan komit atomik |
 | LP-17 | Rencana Sesi 5: `log_audit` berantai hash dan perintah verifikasi |
 
 ## 7. Batas domain
