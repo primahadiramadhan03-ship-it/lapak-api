@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\PenanganGalatApi;
+use App\Http\Middleware\Idempoten;
 use App\Http\Middleware\IdPermintaan;
 use App\Http\Middleware\PaksaJson;
 use App\Http\Middleware\PastikanIzin;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'sesi.segar' => SesiSegar::class,
             'izin' => PastikanIzin::class,
+            'idempoten' => Idempoten::class,
         ]);
         $middleware->prependToPriorityList(
             before: SubstituteBindings::class,
