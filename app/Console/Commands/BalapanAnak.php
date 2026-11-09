@@ -26,14 +26,12 @@ final class BalapanAnak extends Command
             ? json_decode(base64_decode($konteksRaw), true) ?? []
             : [];
 
-        $kelas = str_starts_with($namaSkenario, 'App\\Balapan\\')
-            ? $namaSkenario
-            : 'App\\Balapan\\'.$namaSkenario;
+        $kelas = $this->temukanKelas($namaSkenario);
 
-        if (! class_exists($kelas)) {
+        if ($kelas === null || ! class_exists($kelas)) {
             $this->output->write(json_encode([
                 'sukses' => false,
-                'galat' => "Kelas skenario [{$kelas}] tidak ditemukan.",
+                'galat' => "Kelas skenario [{$namaSkenario}] tidak ditemukan.",
             ]));
 
             return self::FAILURE;
@@ -58,5 +56,40 @@ final class BalapanAnak extends Command
 
             return self::FAILURE;
         }
+    }
+
+    private function temukanKelas(string $nama): ?string
+    {
+        if (str_starts_with($nama, 'App\\Balapan\\') && class_exists($nama)) {
+            return $nama;
+        }
+
+        $kandidatKapital = 'App\\Balapan\\'.ucfirst($nama);
+        if (class_exists($kandidatKapital)) {
+            return $kandidatKapital;
+        }
+
+        $kandidatBiasa = 'App\\Balapan\\'.$nama;
+        if (class_exists($kandidatBiasa)) {
+            return $kandidatBiasa;
+        }
+
+        $direktori = app_path('Balapan');
+        $berkasList = glob($direktori.'/*.php') ?: [];
+        foreach ($berkasList as $berkas) {
+            $base = basename($berkas, '.php');
+            if ($base === 'SkenarioBalapan' || $base === 'PanggilHttp') {
+                continue;
+            }
+
+            $k = 'App\\Balapan\\'.$base;
+            if (class_exists($k) && is_subclass_of($k, SkenarioBalapan::class)) {
+                if (strcasecmp(app($k)->nama(), $nama) === 0 || strcasecmp($base, $nama) === 0) {
+                    return $k;
+                }
+            }
+        }
+
+        return null;
     }
 }

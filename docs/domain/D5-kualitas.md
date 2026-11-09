@@ -34,10 +34,10 @@
 | `app/Models/KunciIdempotensi.php` | Model catatan kunci idempotensi |
 | `app/Http/Middleware/Idempoten.php` | Middleware alias `idempoten` dan `idempoten:wajib` |
 | `app/Exceptions/KonflikIdempotensi.php` | Galat LP-11 jika kunci sama dipakai payload berbeda (409) |
-| `app/Exceptions/KunciIdempotensiDibutuhkan.php` | Galat LP-11 jika kunci wajib tidak disertakan (400) |
+| `app/Exceptions/KunciIdempotensiDibutuhkan.php` | Galat LP-11 jika kunci wajib tidak disertakan (422) |
 | `app/Console/Commands/Balapan.php` | Perintah runner `lapak:balapan` |
 | `app/Console/Commands/BalapanAnak.php` | Perintah pekerja konkurensi `lapak:balapan:anak` |
-| `app/Balapan/` | Kontrak skenario dan implementasi uji balapan konkurensi |
+| `app/Balapan/` | Kontrak skenario, trait PanggilHttp, kalibrasi serempak, dan balapan |
 | `tests/Feature/Sistem/IdempotensiTest.php` | Pengujian kontrak idempotensi dan replay respons |
 
 ## 2. Tabel yang dimiliki

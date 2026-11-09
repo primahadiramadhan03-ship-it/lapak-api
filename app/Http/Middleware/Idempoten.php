@@ -56,7 +56,7 @@ final class Idempoten
             }
 
             return response()->json($catatan->respons, $catatan->status_kode, [
-                'X-Idempotent-Replayed' => 'true',
+                'Idempotency-Replayed' => 'true',
             ]);
         }
 
@@ -87,7 +87,7 @@ final class Idempoten
                     }
 
                     return response()->json($catatanAda->respons, $catatanAda->status_kode, [
-                        'X-Idempotent-Replayed' => 'true',
+                        'Idempotency-Replayed' => 'true',
                     ]);
                 }
 

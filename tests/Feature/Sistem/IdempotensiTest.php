@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Balapan\IdempotensiGanda;
+use App\Balapan\PanggilHttp;
+use App\Balapan\Serempak;
 use App\Models\KunciIdempotensi;
 use App\Models\Pengguna;
 use Illuminate\Support\Facades\Route;
@@ -72,7 +74,7 @@ it('mengembalikan respons tersimpan bila kunci yang sama dikirimkan kembali (rep
         ->withHeader('Idempotency-Key', $kunci)
         ->postJson('/api/_uji/idempoten', ['produk_id' => 5])
         ->assertStatus(201)
-        ->assertHeader('X-Idempotent-Replayed', 'true');
+        ->assertHeader('Idempotency-Replayed', 'true');
 
     expect($responsKedua->json('data.acak'))->toBe($tokenAcakPertama);
 });
@@ -106,10 +108,10 @@ it('tidak menyimpan kunci bila permintaan downstream gagal (rollback atomik)', f
     ]);
 });
 
-it('menuntut header Idempotency-Key pada mode wajib (LP-11)', function () {
+it('menuntut header Idempotency-Key pada mode wajib dengan status 422 (LP-11)', function () {
     $this->sebagai($this->pengguna)
         ->postJson('/api/_uji/idempoten-wajib', ['nominal' => 50000])
-        ->assertStatus(400)
+        ->assertStatus(422)
         ->assertJsonPath('galat.kode', 'LP-11');
 
     $this->sebagai($this->pengguna)
@@ -141,7 +143,8 @@ it('memisahkan kunci idempotensi antar pengguna yang berbeda', function () {
 it('dapat menampilkan daftar skenario pada command lapak:balapan', function () {
     $this->artisan('lapak:balapan', ['--daftar' => true])
         ->assertSuccessful()
-        ->expectsOutputToContain('IdempotensiGanda');
+        ->expectsOutputToContain('IdempotensiGanda')
+        ->expectsOutputToContain('serempak');
 });
 
 it('memiliki skenario IdempotensiGanda yang mengevaluasi integritas dengan benar', function () {
@@ -171,4 +174,33 @@ it('memiliki skenario IdempotensiGanda yang mengevaluasi integritas dengan benar
     expect($evaluasi['valid'])->toBeTrue()
         ->and($evaluasi['sukses'])->toBe(2)
         ->and($evaluasi['gagal'])->toBe(3);
+});
+
+it('memiliki skenario Serempak yang mengkalibrasi runner balapan dengan benar', function () {
+    $skenario = app(Serempak::class);
+    $konteks = $skenario->siapkan();
+
+    $hasilPembalap = [
+        1 => ['pembalap' => 1, 'status' => 'terhubung', 'mulai' => 1000.01, 'selesai' => 1000.02],
+        2 => ['pembalap' => 2, 'status' => 'terhubung', 'mulai' => 1000.01, 'selesai' => 1000.02],
+        3 => ['pembalap' => 3, 'status' => 'terhubung', 'mulai' => 1000.02, 'selesai' => 1000.03],
+    ];
+
+    $evaluasi = $skenario->evaluasi($hasilPembalap, $konteks);
+
+    expect($evaluasi['valid'])->toBeTrue()
+        ->and($evaluasi['sukses'])->toBe(3)
+        ->and($evaluasi['gagal'])->toBe(0);
+});
+
+it('trait PanggilHttp dapat mengirimkan HTTP request internal', function () {
+    $objek = new class
+    {
+        use PanggilHttp;
+    };
+
+    $hasil = $objek->panggilJson('GET', '/api/v1/health');
+
+    expect($hasil['status'])->toBe(200)
+        ->and($hasil['data']['sukses'])->toBeTrue();
 });

@@ -183,7 +183,7 @@ Klien menyertakan header:
 
 ### Mekanisme & Transaksi
 
-1. **Replay Respons**: Bila permintaan dengan kunci yang sama dan payload yang identik dikirimkan kembali, sistem langsung mengembalikan potret respons yang tersimpan dengan header `X-Idempotent-Replayed: true` tanpa menjalankan ulang mutasi di controller maupun basis data.
+1. **Replay Respons**: Bila permintaan dengan kunci yang sama dan payload yang identik dikirimkan kembali, sistem langsung mengembalikan potret respons yang tersimpan dengan header `Idempotency-Replayed: true` tanpa menjalankan ulang mutasi di controller maupun basis data.
 2. **Deteksi Konflik**: Bila kunci yang sama digunakan untuk payload atau rute yang berbeda, sistem menolak permintaan dengan status HTTP `409 Conflict` dan kode galat `LP-11`.
 3. **Komit Satu Transaksi**: Catatan pada tabel `kunci_idempotensi` dicatat sebelum anak tangga pertama dan dikomit bersama dengan efek transaksi dalam satu blok transaksi database atomik. Jika transaksi gagal, kunci tidak akan tersimpan (rollback).
-4. **Middleware `idempoten`**: Disediakan alias `'idempoten'` (opsional: memeriksa kunci bila ada) atau `'idempoten:wajib'` (menolak dengan `400 Bad Request` bila header absen).
+4. **Middleware `idempoten`**: Disediakan alias `'idempoten'` (opsional: memeriksa kunci bila ada) atau `'idempoten:wajib'` (menolak dengan `422 Unprocessable Entity` bila header absen).

@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Process;
 final class Balapan extends Command
 {
     protected $signature = 'lapak:balapan
-                            {--skenario= : Nama skenario balapan (misal: IdempotensiGanda, AlamatPertama, RebutanStok)}
+                            {skenario? : Nama skenario balapan (misal: serempak, IdempotensiGanda)}
+                            {--skenario= : Nama skenario balapan}
                             {--pembalap= : Jumlah proses serentak}
                             {--daftar : Tampilkan seluruh skenario yang tersedia}';
 
@@ -27,7 +28,7 @@ final class Balapan extends Command
             return self::SUCCESS;
         }
 
-        $namaSkenario = (string) $this->option('skenario');
+        $namaSkenario = (string) ($this->argument('skenario') ?: $this->option('skenario'));
         if ($namaSkenario === '') {
             $pilihan = array_keys($daftarSkenario);
             if ($pilihan === []) {
@@ -63,8 +64,10 @@ final class Balapan extends Command
         $binary = PHP_BINARY;
         $artisan = base_path('artisan');
 
+        $namaKelas = class_basename($skenario);
+
         foreach (range(1, $jumlahPembalap) as $i) {
-            $perintahList["pembalap_{$i}"] = "{$binary} {$artisan} lapak:balapan:anak {$skenario->nama()} {$i} --konteks={$konteksEncoded}";
+            $perintahList["pembalap_{$i}"] = "{$binary} {$artisan} lapak:balapan:anak {$namaKelas} {$i} --konteks={$konteksEncoded}";
         }
 
         $hasilPool = Process::concurrently(function ($pool) use ($perintahList) {
@@ -115,7 +118,7 @@ final class Balapan extends Command
 
         foreach ($berkasList as $berkas) {
             $nama = basename($berkas, '.php');
-            if ($nama === 'SkenarioBalapan') {
+            if ($nama === 'SkenarioBalapan' || $nama === 'PanggilHttp') {
                 continue;
             }
 
@@ -139,6 +142,11 @@ final class Balapan extends Command
 
         foreach ($daftar as $k => $kelas) {
             if (strcasecmp($k, $nama) === 0) {
+                return $kelas;
+            }
+
+            $instansi = app($kelas);
+            if (strcasecmp($instansi->nama(), $nama) === 0) {
                 return $kelas;
             }
         }

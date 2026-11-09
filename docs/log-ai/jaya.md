@@ -31,15 +31,16 @@
 
 **Bagian yang dibantu**:
   - Merancang skema migration tabel `kunci_idempotensi` dan model `KunciIdempotensi` dengan relasi `pengguna_id` dan index unik pencegah balapan kunci (LP-11).
-  - Menyusun middleware `Idempoten` yang menjamin catatan kunci dikomit satu transaksi bersama efeknya sebelum anak tangga pertama, serta mendukung replay respons tersimpan (`X-Idempotent-Replayed: true`).
-  - Menyusun galat `KonflikIdempotensi` (409) dan `KunciIdempotensiDibutuhkan` (400) sebagai penegakan aturan LP-11.
-  - Membangun runner `lapak:balapan` (`Balapan.php`), sub-proses pekerja `lapak:balapan:anak` (`BalapanAnak.php`), kontrak kelas `SkenarioBalapan`, dan contoh implementasi skenario `IdempotensiGanda`.
+  - Menyusun middleware `Idempoten` yang menjamin catatan kunci dikomit satu transaksi bersama efeknya sebelum anak tangga pertama, serta mendukung replay respons tersimpan (`Idempotency-Replayed: true`).
+  - Menyusun galat `KonflikIdempotensi` (409) dan `KunciIdempotensiDibutuhkan` (422) sebagai penegakan aturan LP-11.
+  - Membangun runner `lapak:balapan` (`Balapan.php`), sub-proses pekerja `lapak:balapan:anak` (`BalapanAnak.php`), kontrak kelas `SkenarioBalapan`, trait `PanggilHttp` (Modul Hal 26), skenario kalibrasi `Serempak` (Modul Hal 26–27), dan skenario `IdempotensiGanda`.
   - Menyusun pengujian kontrak idempotensi pada `tests/Feature/Sistem/IdempotensiTest.php`.
   - Memperbarui dokumentasi `docs/KONTRAK-API.md` (bagian Idempotensi LP-11) dan `docs/domain/D5-kualitas.md`.
 
 **Cara memverifikasi hasil**:
   - Menjalankan migrasi `php artisan migrate:fresh` dan memastikan tabel `kunci_idempotensi` dibuat tanpa tipe pecahan terlarang (LP-1).
   - Menjalankan `php artisan test --filter=IdempotensiTest` pada SQLite.
-  - Menjalankan `DB_CONNECTION=mysql DB_DATABASE=lapak_uji ./vendor/bin/pest` untuk memastikan seluruh 286 pengujian lulus 100% pada MySQL 8 InnoDB.
+  - Menjalankan `DB_CONNECTION=mysql DB_DATABASE=lapak_uji ./vendor/bin/pest` untuk memastikan seluruh 288 pengujian lulus 100% pada MySQL 8 InnoDB.
+  - Menjalankan `php artisan lapak:balapan serempak` untuk kalibrasi runner MySQL (5 pembalap serentak).
   - Menjalankan `php artisan lapak:balapan --skenario=IdempotensiGanda` dan memverifikasi integritas balapan multi-proses (1 mutasi tercipta, 4 konflik/dicegah, 0 kebocoran data).
   - Menjalankan `./vendor/bin/pint --test` dan memastikan 0 style issues.

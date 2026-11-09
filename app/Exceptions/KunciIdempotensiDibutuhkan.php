@@ -11,7 +11,7 @@ final class KunciIdempotensiDibutuhkan extends GalatDomain
         parent::__construct(
             kode: 'LP-11',
             pesan: $pesan,
-            statusHttp: 400,
+            statusHttp: 422,
         );
     }
 }
