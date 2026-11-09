@@ -1,12 +1,22 @@
 <?php
 
 use App\Domain\Pesanan\PenomorPesanan;
-use Carbon\CarbonImmutable;
 
-it('membuat nomor pesanan berformat LPK-YYYYMMDD-NNNNNN (LP-9)', function () {
-    $saat = CarbonImmutable::parse('2026-10-04 10:15:00', 'Asia/Jakarta');
+it('membentuk nomor dari tanggal dan id pesanan (LP-9)', function () {
+    $nomor = PenomorPesanan::untuk(123, new DateTimeImmutable('2026-10-27 03:15:00 UTC'));
 
-    expect(PenomorPesanan::buat(1, $saat))->toBe('LPK-20261004-000001')
-        ->and(PenomorPesanan::buat(42, $saat))->toBe('LPK-20261004-000042')
-        ->and(PenomorPesanan::buat(123456, $saat))->toBe('LPK-20261004-123456');
+    expect($nomor)->toBe('LPK-20261027-000123')
+        ->and($nomor)->toMatch(PenomorPesanan::POLA);
+});
+
+it('memakai tanggal WIB, bukan tanggal UTC', function () {
+    // 23.30 UTC tanggal 27 adalah 06.30 WIB tanggal 28.
+    expect(PenomorPesanan::untuk(7, new DateTimeImmutable('2026-10-27 23:30:00 UTC')))
+        ->toBe('LPK-20261028-000007');
+});
+
+it('tidak memotong id yang melewati enam angka', function () {
+    expect(PenomorPesanan::untuk(1_234_567, new DateTimeImmutable('2026-10-27 03:00:00 UTC')))
+        ->toBe('LPK-20261027-1234567')
+        ->toMatch(PenomorPesanan::POLA);
 });

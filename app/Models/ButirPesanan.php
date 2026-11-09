@@ -4,32 +4,38 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\ButirPesananFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ButirPesanan extends Model
+final class ButirPesanan extends Model
 {
+    /** @use HasFactory<ButirPesananFactory> */
     use HasFactory;
 
     public $timestamps = false;
 
     protected $table = 'butir_pesanan';
 
-    protected $fillable = [
-        'pesanan_id',
-        'produk_id',
-        'nama_produk',
-        'harga_rupiah',
-        'kuantitas',
-        'subtotal_rupiah',
-    ];
+    protected $fillable = [];
 
+    protected function casts(): array
+    {
+        return [
+            'harga_rupiah' => 'integer',
+            'kuantitas' => 'integer',
+            'subtotal_rupiah' => 'integer',
+        ];
+    }
+
+    /** @return BelongsTo<Pesanan, $this> */
     public function pesanan(): BelongsTo
     {
         return $this->belongsTo(Pesanan::class, 'pesanan_id');
     }
 
+    /** @return BelongsTo<Produk, $this> */
     public function produk(): BelongsTo
     {
         return $this->belongsTo(Produk::class, 'produk_id');

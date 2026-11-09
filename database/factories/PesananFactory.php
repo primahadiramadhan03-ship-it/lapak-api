@@ -2,10 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Domain\Pesanan\PenomorPesanan;
 use App\Domain\Pesanan\StatusPesanan;
 use App\Models\Checkout;
-use App\Models\Pengguna;
 use App\Models\Pesanan;
 use App\Models\Toko;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,39 +16,27 @@ class PesananFactory extends Factory
     {
         return [
             'checkout_id' => Checkout::factory(),
-            'nomor' => null,
-            'pembeli_id' => Pengguna::factory(),
+            // Pembeli sebuah pesanan selalu pembeli checkout-nya.
+            'pembeli_id' => fn (array $isi) => Checkout::query()
+                ->findOrFail($isi['checkout_id'])
+                ->pembeli_id,
             'toko_id' => Toko::factory(),
             'status' => StatusPesanan::MenungguPembayaran,
-            'subtotal_rupiah' => 90_000,
-            'ongkir_rupiah' => 10_000,
-            'total_rupiah' => 100_000,
+            'subtotal_rupiah' => 185_000,
+            'ongkir_rupiah' => 12_000,
+            'total_rupiah' => 197_000,
             'alamat_kirim' => [
-                'nama_penerima' => 'Budi Santoso',
-                'telepon' => '081234567890',
-                'alamat_lengkap' => 'Jl. Merdeka No. 10',
+                'nama_penerima' => 'Andi Nugroho',
+                'telepon' => '081200000008',
+                'jalan' => 'Jl. Slamet Riyadi No. 12',
                 'kota' => 'Surakarta',
-                'kode_pos' => '57126',
+                'kode_pos' => '57111',
             ],
-            'dibayar_pada' => null,
-            'dibatalkan_pada' => null,
-            'alasan_batal' => null,
         ];
     }
 
-    public function configure(): static
+    public function dibayar(): static
     {
-        return $this->afterCreating(function (Pesanan $pesanan) {
-            if ($pesanan->nomor === null) {
-                $pesanan->updateQuietly([
-                    'nomor' => PenomorPesanan::buat($pesanan->id),
-                ]);
-            }
-        });
-    }
-
-    public function status(StatusPesanan $status): static
-    {
-        return $this->state(fn () => ['status' => $status]);
+        return $this->state(['status' => StatusPesanan::Dibayar, 'dibayar_pada' => now()]);
     }
 }
