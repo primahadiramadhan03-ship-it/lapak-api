@@ -51,6 +51,13 @@ final class Produk extends Model
         return $this->toko->pemilik_id === $pengguna->id;
     }
 
+    /** Syarat yang sama dengan scopeTampil, untuk baris yang sudah di tangan beserta tokonya. */
+    public function sedangTampil(): bool
+    {
+        return $this->status === StatusProduk::Aktif
+            && $this->toko->status === StatusToko::Aktif;
+    }
+
     /**
      * LP-4: produk tampil hanya bila berstatus aktif DAN tokonya aktif.
      * Seluruh pintu publik wajib lewat scope ini; jangan menulis ulang syaratnya di controller.
