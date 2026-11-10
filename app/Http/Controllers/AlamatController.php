@@ -8,6 +8,7 @@ use App\Http\Requests\AlamatRequest;
 use App\Http\Resources\AlamatResource;
 use App\Models\Alamat;
 use App\Services\BukuAlamat;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class AlamatController extends Controller
@@ -16,7 +17,11 @@ final class AlamatController extends Controller
         private readonly BukuAlamat $buku,
     ) {}
 
-    public function index(Request $request)
+    /**
+     * GET /alamat: menampilkan alamat milik pengguna yang sedang
+     * masuk.
+     */
+    public function index(Request $request): JsonResponse
     {
         $alamat = Alamat::query()
             ->milik($request->user())
@@ -27,7 +32,7 @@ final class AlamatController extends Controller
         return $this->sukses(AlamatResource::collection($alamat));
     }
 
-    public function store(AlamatRequest $request)
+    public function store(AlamatRequest $request): JsonResponse
     {
         $alamat = $this->buku->tambah(
             $request->user(),
@@ -37,7 +42,7 @@ final class AlamatController extends Controller
         return $this->sukses(new AlamatResource($alamat), 201);
     }
 
-    public function utama(Request $request, int $id)
+    public function utama(Request $request, int $id): JsonResponse
     {
         $alamat = $this->buku->jadikanUtama(
             $request->user(),
@@ -47,7 +52,7 @@ final class AlamatController extends Controller
         return $this->sukses(new AlamatResource($alamat));
     }
 
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, int $id): JsonResponse
     {
         $this->buku->hapus($request->user(), $id);
 

@@ -167,3 +167,86 @@ it('menolak perubahan dan penghapusan alamat milik pengguna lain', function () {
     expect($alamat->fresh())->not->toBeNull()
         ->and($alamat->fresh()->utama)->toBeTrue();
 });
+
+it('tidak menjadikan alamat kedua sebagai alamat utama secara otomatis', function () {
+    $alamatPertama = Alamat::factory()
+        ->for($this->andi, 'pengguna')
+        ->create(['utama' => true]);
+
+    $respons = $this->sebagai($this->andi)
+        ->postJson('/api/v1/alamat', [
+            'label' => 'Kantor',
+            'nama_penerima' => 'Andi Nugroho',
+            'telepon' => '081200000008',
+            'jalan' => 'Jl. Slamet Riyadi No. 20',
+            'kota' => 'Surakarta',
+            'kode_pos' => '57111',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.utama', false);
+
+    $alamatKeduaId = $respons->json('data.id');
+
+    expect($alamatPertama->fresh()->utama)->toBeTrue()
+        ->and(Alamat::query()->findOrFail($alamatKeduaId)->utama)->toBeFalse();
+});
+
+it('tidak mengubah alamat utama ketika alamat non-utama dihapus', function () {
+    $alamatUtama = Alamat::factory()
+        ->for($this->andi, 'pengguna')
+        ->create(['utama' => true]);
+
+    $alamatCadangan = Alamat::factory()
+        ->cadangan()
+        ->for($this->andi, 'pengguna')
+        ->create();
+
+    $this->sebagai($this->andi)
+        ->deleteJson("/api/v1/alamat/{$alamatCadangan->id}")
+        ->assertOk();
+
+    expect($alamatCadangan->fresh())->toBeNull()
+        ->and($alamatUtama->fresh()->utama)->toBeTrue()
+        ->and(Alamat::query()->milik($this->andi)->where('utama', true)->count())->toBe(1);
+});
+
+it('menjadikan alamat baru sebagai utama setelah satu-satunya alamat dihapus', function () {
+    $alamatLama = Alamat::factory()
+        ->for($this->andi, 'pengguna')
+        ->create(['utama' => true]);
+
+    $this->sebagai($this->andi)
+        ->deleteJson("/api/v1/alamat/{$alamatLama->id}")
+        ->assertOk();
+
+    $respons = $this->sebagai($this->andi)
+        ->postJson('/api/v1/alamat', [
+            'label' => 'Rumah Baru',
+            'nama_penerima' => 'Andi Nugroho',
+            'telepon' => '081200000008',
+            'jalan' => 'Jl. Slamet Riyadi No. 30',
+            'kota' => 'Surakarta',
+            'kode_pos' => '57111',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.utama', true);
+
+    expect(Alamat::query()->milik($this->andi)->count())->toBe(1)
+        ->and(Alamat::query()->milik($this->andi)->where('utama', true)->count())->toBe(1);
+});
+
+it('menolak nomor telepon dan kode pos yang tidak valid', function (array $data) {
+    $this->sebagai($this->andi)
+        ->postJson('/api/v1/alamat', array_merge([
+            'label' => 'Rumah',
+            'nama_penerima' => 'Andi Nugroho',
+            'telepon' => '081200000008',
+            'jalan' => 'Jl. Slamet Riyadi No. 12',
+            'kota' => 'Surakarta',
+            'kode_pos' => '57111',
+        ], $data))
+        ->assertUnprocessable();
+})->with([
+    'nomor telepon tidak valid' => [['telepon' => 'abc']],
+    'kode pos tidak valid' => [['kode_pos' => 'abc']],
+]);

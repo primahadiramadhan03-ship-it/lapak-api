@@ -38,7 +38,13 @@ final class BukuAlamat
         return $this->terkunci($pemilik, function (Collection $alamat) use ($idAlamat) {
             $terpilih = $alamat->firstWhere('id', $idAlamat);
 
-            abort_if($terpilih === null, 404);
+            if ($terpilih === null) {
+                throw new GalatDomain(
+                    'ALAMAT_TIDAK_DITEMUKAN',
+                    'Alamat tidak ditemukan.',
+                    404
+                );
+            }
 
             foreach ($alamat as $item) {
                 $item->forceFill([
@@ -55,7 +61,13 @@ final class BukuAlamat
         $this->terkunci($pemilik, function (Collection $alamat) use ($idAlamat) {
             $terpilih = $alamat->firstWhere('id', $idAlamat);
 
-            abort_if($terpilih === null, 404);
+            if ($terpilih === null) {
+                throw new GalatDomain(
+                    'ALAMAT_TIDAK_DITEMUKAN',
+                    'Alamat tidak ditemukan.',
+                    404
+                );
+            }
 
             $adalahUtama = $terpilih->utama;
 

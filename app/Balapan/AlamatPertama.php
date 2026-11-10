@@ -19,7 +19,9 @@ final class AlamatPertama extends SkenarioBalapan
 
     public function deskripsi(): string
     {
-        return 'Menguji 8 proses penambahan alamat pertama secara bersamaan dengan batas maksimal 5 alamat.';
+        $batas = (int) config('lapak.transaksi.alamat_maksimum');
+
+        return 'Menguji '.$this->jumlahPembalap().' proses penambahan alamat pertama secara bersamaan dengan batas maksimal '.$batas.' alamat.';
     }
 
     public function jumlahPembalap(): int
@@ -70,6 +72,11 @@ final class AlamatPertama extends SkenarioBalapan
     public function evaluasi(array $hasil, array $konteks): array
     {
         $penggunaId = $konteks['pengguna_id'];
+        $batas = (int) config('lapak.transaksi.alamat_maksimum');
+        $jumlahPembalap = $this->jumlahPembalap();
+
+        $harapanBerhasil = min($jumlahPembalap, $batas);
+        $harapanDitolak = max(0, $jumlahPembalap - $batas);
 
         $totalAlamat = Alamat::query()
             ->where('pengguna_id', $penggunaId)
@@ -88,10 +95,10 @@ final class AlamatPertama extends SkenarioBalapan
             ->where('status_kode', 422)
             ->count();
 
-        $valid = $berhasil === 5
-            && $ditolak === 3
-            && $totalAlamat === 5
-            && $totalUtama === 1;
+        $valid = $berhasil === $harapanBerhasil
+            && $ditolak === $harapanDitolak
+            && $totalAlamat === $harapanBerhasil
+            && $totalUtama === ($harapanBerhasil > 0 ? 1 : 0);
 
         Pengguna::query()->whereKey($penggunaId)->delete();
 
@@ -100,10 +107,11 @@ final class AlamatPertama extends SkenarioBalapan
             'gagal' => $ditolak,
             'valid' => $valid,
             'pesan' => $valid
-                ? 'Integritas alamat terjaga: tepat 5 alamat tersimpan dan hanya 1 menjadi alamat utama.'
-                : 'Anomali terdeteksi: hasil tidak memenuhi batas 5 alamat dan tepat 1 alamat utama.',
+                ? 'Integritas alamat terjaga: tepat '.$harapanBerhasil.' alamat tersimpan dan jumlah alamat utama sesuai.'
+                : 'Anomali terdeteksi: hasil tidak memenuhi batas '.$batas.' alamat atau jumlah alamat utama tidak sesuai.',
             'rincian' => [
                 'proses_dijalankan' => count($hasil),
+                'batas_alamat' => $batas,
                 'alamat_berhasil' => $berhasil,
                 'alamat_ditolak' => $ditolak,
                 'total_alamat_database' => $totalAlamat,
