@@ -69,3 +69,20 @@
   - Menjalankan `./vendor/bin/pint --test` (226 files passed).
   - Menjalankan `./vendor/bin/pest` di SQLite (318 passed, 1275 assertions).
   - Menjalankan `DB_CONNECTION=mysql DB_HOST=172.24.192.1 DB_PORT=3306 DB_DATABASE=lapak_uji DB_USERNAME=lapak DB_PASSWORD=rahasia ./vendor/bin/pest` di MySQL 8 InnoDB (318 passed, 1275 assertions).
+
+
+## Sesi 4 — B4: Webhook Bertanda Tangan dan Dana Tertahan
+
+- **Alat**: Google Gemini / Antigravity
+- **Bagian yang dibantu**:
+  - Mengimplementasikan `TandaTanganGateway` menggunakan HMAC-SHA256 dengan perlindungan replay serangan waktu dan rahasia bersama.
+  - Memutakhirkan `LayananPembayaran` untuk memproses pelunasan (`terima()`) di bawah `GembokCheckout` dan memindahkan dana ke dompet escrow (`tahanDana()`) sesuai tangga kunci baris (pesanan urutan 5, dompet urutan 7).
+  - Membuat controller `WebhookPembayaranController` dan `PembayaranSayaController`.
+  - Mendaftarkan endpoint publik `POST /api/v1/webhook/pembayaran` dan rute `GET /api/v1/pembayaran/{kode}` pada matriks otorisasi dan rute terlindung.
+  - Menambahkan invarian kelima pada perintah `lapak:periksa-buku` untuk memverifikasi kesesuaian saldo escrow dengan dana pesanan tertahan.
+  - Membuat perintah `lapak:simulasi-bayar` dan skenario balapan `WebhookGanda` / `BayarGanda`.
+  - Menyusun rangkaian pengujian pada `tests/Feature/Dompet/WebhookPembayaranTest.php`.
+- **Cara verifikasi**:
+  - Menjalankan `./vendor/bin/pint --test` (seluruh berkas lulus).
+  - Menjalankan pengujian Pest di SQLite dan MySQL 8 InnoDB.
+  - Menjalankan simulasi balapan `php artisan lapak:balapan --skenario=webhook-ganda` di MySQL InnoDB (6 proses serentak, lulus 100% tanpa pelanggaran).
