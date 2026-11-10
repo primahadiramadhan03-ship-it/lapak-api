@@ -45,7 +45,7 @@ Route::middleware('auth:sesi')
             // Mengubah stok: wajib Idempotency-Key (LP-11). "Tambah 5" yang diulang karena
             // jaringan putus tidak boleh menjadi tambah 10.
             Route::post('produk/{id}/stok', [ProdukSayaController::class, 'stok'])
-                ->middleware('idempoten')
+                ->middleware('idempoten:wajib')
                 ->name('produk.stok');
         });
     });
