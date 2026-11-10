@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Balapan;
@@ -6,7 +7,6 @@ namespace App\Balapan;
 use App\Models\Alamat;
 use App\Models\Pengguna;
 use App\Services\PenerbitSesi;
-use Illuminate\Support\Facades\DB;
 
 final class AlamatPertama extends SkenarioBalapan
 {
