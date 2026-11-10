@@ -45,3 +45,125 @@ it('memotret alamat tanpa membawa pengenal dan label', function () {
         'kode_pos' => '57111',
     ]);
 });
+
+it('menjadikan alamat pertama sebagai alamat utama secara otomatis', function () {
+    $this->sebagai($this->andi)
+        ->postJson('/api/v1/alamat', [
+            'label' => 'Rumah',
+            'nama_penerima' => 'Andi Nugroho',
+            'telepon' => '081200000008',
+            'jalan' => 'Jl. Slamet Riyadi No. 12',
+            'kota' => 'Surakarta',
+            'kode_pos' => '57111',
+            'utama' => false,
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.utama', true)
+        ->assertJsonMissingPath('data.pengguna_id');
+
+    expect(Alamat::query()->milik($this->andi)->count())->toBe(1);
+});
+
+it('mengabaikan pengguna_id dan utama dari input klien', function () {
+    $orangLain = Pengguna::factory()->pembeli()->create();
+
+    $this->sebagai($this->andi)
+        ->postJson('/api/v1/alamat', [
+            'label' => 'Kantor',
+            'nama_penerima' => 'Andi Nugroho',
+            'telepon' => '081200000008',
+            'jalan' => 'Jl. Slamet Riyadi No. 12',
+            'kota' => 'Surakarta',
+            'kode_pos' => '57111',
+            'pengguna_id' => $orangLain->id,
+            'utama' => false,
+        ])
+        ->assertCreated();
+
+    expect(Alamat::query()->milik($this->andi)->count())->toBe(1)
+        ->and(Alamat::query()->milik($orangLain)->count())->toBe(0);
+});
+
+it('menolak penambahan alamat jika sudah mencapai batas maksimum', function () {
+    Alamat::factory()
+        ->count(5)
+        ->cadangan()
+        ->for($this->andi, 'pengguna')
+        ->create();
+
+    $this->sebagai($this->andi)
+        ->postJson('/api/v1/alamat', [
+            'label' => 'Kantor',
+            'nama_penerima' => 'Andi Nugroho',
+            'telepon' => '081200000008',
+            'jalan' => 'Jl. Slamet Riyadi No. 12',
+            'kota' => 'Surakarta',
+            'kode_pos' => '57111',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonPath('galat.kode', 'ALAMAT_PENUH');
+
+    expect(Alamat::query()->milik($this->andi)->count())->toBe(5);
+});
+
+it('dapat memindahkan alamat utama dan mengulanginya dengan aman', function () {
+    $alamatPertama = Alamat::factory()
+        ->for($this->andi, 'pengguna')
+        ->create(['utama' => true]);
+
+    $alamatKedua = Alamat::factory()
+        ->cadangan()
+        ->for($this->andi, 'pengguna')
+        ->create();
+
+    $this->sebagai($this->andi)
+        ->putJson("/api/v1/alamat/{$alamatKedua->id}/utama")
+        ->assertOk()
+        ->assertJsonPath('data.id', $alamatKedua->id)
+        ->assertJsonPath('data.utama', true);
+
+    $this->sebagai($this->andi)
+        ->putJson("/api/v1/alamat/{$alamatKedua->id}/utama")
+        ->assertOk();
+
+    expect($alamatPertama->fresh()->utama)->toBeFalse()
+        ->and($alamatKedua->fresh()->utama)->toBeTrue()
+        ->and(Alamat::query()->milik($this->andi)->where('utama', true)->count())->toBe(1);
+});
+
+it('menghapus alamat utama dan memilih pengganti', function () {
+    $alamatUtama = Alamat::factory()
+        ->for($this->andi, 'pengguna')
+        ->create(['utama' => true]);
+
+    $alamatCadangan = Alamat::factory()
+        ->cadangan()
+        ->for($this->andi, 'pengguna')
+        ->create();
+
+    $this->sebagai($this->andi)
+        ->deleteJson("/api/v1/alamat/{$alamatUtama->id}")
+        ->assertOk();
+
+    expect(Alamat::query()->find($alamatUtama->id))->toBeNull()
+        ->and($alamatCadangan->fresh()->utama)->toBeTrue();
+});
+
+it('menolak perubahan dan penghapusan alamat milik pengguna lain', function () {
+    $orangLain = Pengguna::factory()->pembeli()->create();
+
+    $alamat = Alamat::factory()
+        ->for($orangLain, 'pengguna')
+        ->create(['utama' => true]);
+
+    $this->sebagai($this->andi)
+        ->putJson("/api/v1/alamat/{$alamat->id}/utama")
+        ->assertNotFound();
+
+    $this->sebagai($this->andi)
+        ->deleteJson("/api/v1/alamat/{$alamat->id}")
+        ->assertNotFound();
+
+    expect($alamat->fresh())->not->toBeNull()
+        ->and($alamat->fresh()->utama)->toBeTrue();
+});
