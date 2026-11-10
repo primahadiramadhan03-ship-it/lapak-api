@@ -4,6 +4,7 @@ return [
     'komisi' => (float) env('LAPAK_KOMISI', 0.05),
     'komisi_persen' => (int) env('LAPAK_KOMISI_PERSEN', 5),
     'batas_waktu_bayar_menit' => env('LAPAK_BATAS_WAKTU_BAYAR_MENIT', 15),
+    'batas_bayar_jam' => (int) env('LAPAK_BATAS_BAYAR_JAM', 24),
     'lama_tahan_hari' => env('LAPAK_LAMA_TAHAN_HARI', 3),
     'minimal_pencairan' => env('LAPAK_MINIMAL_PENCAIRAN', 10000),
     'batas_katalog' => env('LAPAK_BATAS_KATALOG', 50),
