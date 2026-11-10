@@ -14,6 +14,7 @@ final class Balapan extends Command
                             {skenario? : Nama skenario balapan (misal: serempak, IdempotensiGanda)}
                             {--skenario= : Nama skenario balapan}
                             {--pembalap= : Jumlah proses serentak}
+                            {--semua : Jalankan seluruh skenario balapan berturut-turut}
                             {--daftar : Tampilkan seluruh skenario yang tersedia}';
 
     protected $description = 'Menjalankan uji kondisi balapan (race condition) pada MySQL InnoDB';
@@ -26,6 +27,42 @@ final class Balapan extends Command
             $this->tampilkanDaftar($daftarSkenario);
 
             return self::SUCCESS;
+        }
+
+        if ($this->option('semua')) {
+            if ($daftarSkenario === []) {
+                $this->warn('Belum ada skenario balapan di direktori app/Balapan.');
+
+                return self::SUCCESS;
+            }
+
+            $semuaLulus = true;
+            $total = count($daftarSkenario);
+            $ke = 1;
+
+            $this->info("=== Menjalankan {$total} Skenario Balapan (--semua) ===\n");
+
+            foreach ($daftarSkenario as $nama => $kelas) {
+                $this->line("<comment>[{$ke}/{$total}] Skenario: {$nama}</comment>");
+                /** @var SkenarioBalapan $skenario */
+                $skenario = app($kelas);
+                $lulus = $this->eksekusiSkenario($skenario);
+                if (! $lulus) {
+                    $semuaLulus = false;
+                }
+                $this->line(str_repeat('-', 60));
+                $ke++;
+            }
+
+            if ($semuaLulus) {
+                $this->info("Seluruh {$total} skenario balapan LULUS tanpa kebocoran!");
+
+                return self::SUCCESS;
+            }
+
+            $this->error('Terdapat skenario balapan yang GAGAL atau mendeteksi kebocoran!');
+
+            return self::FAILURE;
         }
 
         $namaSkenario = (string) ($this->argument('skenario') ?: $this->option('skenario'));
@@ -49,7 +86,14 @@ final class Balapan extends Command
 
         /** @var SkenarioBalapan $skenario */
         $skenario = app($kelas);
-        $jumlahPembalap = (int) ($this->option('pembalap') ?: $skenario->jumlahPembalap());
+        $pembalapKustom = $this->option('pembalap') ? (int) $this->option('pembalap') : null;
+
+        return $this->eksekusiSkenario($skenario, $pembalapKustom) ? self::SUCCESS : self::FAILURE;
+    }
+
+    private function eksekusiSkenario(SkenarioBalapan $skenario, ?int $pembalapKustom = null): bool
+    {
+        $jumlahPembalap = $pembalapKustom ?: $skenario->jumlahPembalap();
 
         $this->info("Menyiapkan skenario: {$skenario->nama()} ({$jumlahPembalap} pembalap serentak)");
         $this->line("Deskripsi: {$skenario->deskripsi()}");
@@ -100,7 +144,7 @@ final class Balapan extends Command
 
         $this->tampilkanHasil($skenario, $hasilPembalap, $evaluasi, $durasi);
 
-        return $evaluasi['valid'] ? self::SUCCESS : self::FAILURE;
+        return (bool) $evaluasi['valid'];
     }
 
     /**
