@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class Checkout extends Model
 {
@@ -35,5 +36,11 @@ final class Checkout extends Model
     public function pesanan(): HasMany
     {
         return $this->hasMany(Pesanan::class, 'checkout_id');
+    }
+
+    /** @return HasOne<Pembayaran, $this> */
+    public function pembayaran(): HasOne
+    {
+        return $this->hasOne(Pembayaran::class, 'checkout_id');
     }
 }
