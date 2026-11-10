@@ -187,3 +187,19 @@ Klien menyertakan header:
 2. **Deteksi Konflik**: Bila kunci yang sama digunakan untuk payload atau rute yang berbeda, sistem menolak permintaan dengan status HTTP `409 Conflict` dan kode galat `LP-11`.
 3. **Komit Satu Transaksi**: Catatan pada tabel `kunci_idempotensi` dicatat sebelum anak tangga pertama dan dikomit bersama dengan efek transaksi dalam satu blok transaksi database atomik. Jika transaksi gagal, kunci tidak akan tersimpan (rollback).
 4. **Middleware `idempoten`**: Disediakan alias `'idempoten'` (opsional: memeriksa kunci bila ada) atau `'idempoten:wajib'` (menolak dengan `422 Unprocessable Entity` bila header absen).
+
+
+---
+
+## Webhook pembayaran
+
+- `POST /webhook/pembayaran` adalah satu-satunya rute tulis tanpa kunci sesi. Pemanggilnya
+  gerbang pembayaran. Pembeli tidak memiliki pintu apa pun untuk menandai tagihannya lunas.
+- Gerbang mengirim header `X-Gateway-Signature: t=<detik unix>,v1=<tanda>`, dengan `<tanda>`
+  berupa HMAC-SHA256 atas teks `<t>.<badan mentah>` memakai rahasia bersama `LAPAK_GATEWAY_RAHASIA`.
+- Tanpa header, rahasia salah, badan diubah, atau selisih waktu lebih dari 5 menit: jawabannya
+  selalu 401 `TANDA_TANGAN_SALAH` yang sama. Rahasia yang kosong menolak seluruh webhook.
+- Badan: `id_peristiwa`, `kode_pembayaran`, `jumlah_rupiah`. Jumlah dicocokkan dengan tagihan di
+  basis data; selisih satu rupiah pun dijawab 422 `JUMLAH_TIDAK_COCOK` dan tidak melunasi apa pun.
+- Kabar yang sama boleh tiba berkali-kali. Yang pertama dijawab `"hasil": "dilunasi"`, sisanya
+  `"hasil": "sudah_diproses"`, dan uangnya dibukukan satu kali.
