@@ -28,7 +28,7 @@ Route::middleware(['auth:sesi', 'izin:keranjang.kelola'])
 Route::middleware(['auth:sesi', 'izin:pesanan.buat'])->group(function (): void {
     // Urutan: batas laju per sesi dulu, baru transaksi idempotensi.
     Route::post('checkout', CheckoutController::class)
-        ->middleware(['throttle:transaksi', 'idempoten'])
+        ->middleware(['throttle:transaksi', 'idempoten:wajib'])
         ->name('checkout');
 
     Route::get('pesanan', [PesananSayaController::class, 'index'])->name('pesanan.index');
