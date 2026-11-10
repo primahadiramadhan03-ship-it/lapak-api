@@ -34,4 +34,3 @@ final class CheckoutRequest extends FormRequest
         return ['alamat_id.exists' => 'Alamat tidak ditemukan.'];
     }
 }
-

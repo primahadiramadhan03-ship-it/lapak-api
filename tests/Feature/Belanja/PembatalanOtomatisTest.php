@@ -51,4 +51,3 @@ it('memeriksa ulang tagihan di bawah gembok sebelum membatalkan', function () {
         ->toBe([StatusPesanan::MenungguPembayaran])
         ->and($produk[0]->refresh()->stok)->toBe(3);
 });
-

@@ -30,4 +30,3 @@ final class CheckoutController extends Controller
         );
     }
 }
-
