@@ -51,3 +51,21 @@
   - Memastikan konfigurasi database `lapak` dan `lapak_uji` berjalan dengan `REPEATABLE-READ`.
   - Menjalankan `./vendor/bin/pint --test` (183 berkas lulus).
   - Menjalankan seluruh pengujian `./vendor/bin/pest` di SQLite dan MySQL (278 passed).
+
+
+## Sesi 4 — A5: Kontrak Pembayaran
+
+- **Alat**: Google Gemini / Antigravity
+- **Bagian yang dibantu**:
+  - Merancang skema tabel `pembayaran` sesuai relasi 1:1 terhadap `checkout` (LP-7) dan foreign key restrictOnDelete.
+  - Membuat enum `StatusPembayaran` (`menunggu`, `lunas`, `kedaluwarsa`).
+  - Menyusun model `Pembayaran` dengan casting, relasi ke `Checkout`, dan scope `scopeLewatBatas`.
+  - Menambahkan relasi `pembayaran()` pada model `Checkout`.
+  - Membuat `PembayaranFactory` dan `PembayaranResource`.
+  - Mengimplementasikan `LayananPembayaran` versi kontrak (metode `buat`, `untuk`, `tandaiKedaluwarsa` dengan penegakan transaksi database dan `lockForUpdate`).
+  - Menambahkan konfigurasi `batas_bayar_jam` pada `config/lapak.php`.
+  - Menyusun pengujian unit dan fitur pada `tests/Feature/Dompet/PembayaranTest.php`.
+- **Cara verifikasi**:
+  - Menjalankan `./vendor/bin/pint --test` (226 files passed).
+  - Menjalankan `./vendor/bin/pest` di SQLite (318 passed, 1275 assertions).
+  - Menjalankan `DB_CONNECTION=mysql DB_HOST=172.24.192.1 DB_PORT=3306 DB_DATABASE=lapak_uji DB_USERNAME=lapak DB_PASSWORD=rahasia ./vendor/bin/pest` di MySQL 8 InnoDB (318 passed, 1275 assertions).
