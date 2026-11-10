@@ -66,7 +66,13 @@ it('memasang idempoten pada setiap rute berkunci, di belakang kunci sesi', funct
     foreach (POST_BERKUNCI as $nama) {
         $middleware = rutePost()[$nama] ?? [];
         $auth = array_search('auth:sesi', $middleware, true);
-        $idempoten = array_search('idempoten', $middleware, true);
+        $idempoten = false;
+        foreach ($middleware as $idx => $m) {
+            if ($m === 'idempoten' || str_starts_with($m, 'idempoten:')) {
+                $idempoten = $idx;
+                break;
+            }
+        }
 
         // Idempoten mencatat kunci atas nama pengguna, maka harus berjalan setelah auth:sesi.
         if ($auth === false || $idempoten === false || $idempoten < $auth) {
@@ -80,7 +86,7 @@ it('memasang idempoten pada setiap rute berkunci, di belakang kunci sesi', funct
 it('tidak memasang idempoten pada rute yang dinyatakan tidak memerlukannya', function () {
     $salah = array_keys(array_filter(
         array_intersect_key(rutePost(), POST_TANPA_KUNCI),
-        fn (array $middleware) => in_array('idempoten', $middleware, true),
+        fn (array $middleware) => collect($middleware)->contains(fn ($m) => $m === 'idempoten' || str_starts_with($m, 'idempoten:')),
     ));
 
     expect($salah)->toBeEmpty('Tanpa kunci tetapi memasang idempoten: '.implode(', ', $salah));
