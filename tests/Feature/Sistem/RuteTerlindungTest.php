@@ -13,6 +13,8 @@ describe('Rute Terlindung', function () {
         $rutePublik = [
             'POST /api/v1/registrasi',
             'POST /api/v1/masuk',
+            // Dipanggil gerbang pembayaran, bukan pengguna. Dijaga tanda tangan HMAC, bukan kunci sesi.
+            'POST /api/v1/webhook/pembayaran',
         ];
 
         $ruteTerlindung = [
