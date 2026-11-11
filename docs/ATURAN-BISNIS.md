@@ -7,17 +7,17 @@ Berikut adalah aturan bisnis berkode yang dirujuk dari kode, pesan galat, kasus 
 | LP-1 | Seluruh harga, saldo, dan biaya disimpan sebagai bilangan bulat rupiah. Tidak ada float di lapisan mana pun. | `app/Domain/Uang.php`, migrasi `harga_rupiah`, `ongkir_rupiah` |
 | LP-2 | Perubahan peran pengguna hanya melalui PengelolaPeran. | `NamaPeran::izinBawaan`, `PemeriksaIzin`, middleware izin, `PengelolaPeran`, `MatriksOtorisasiTest` |
 | LP-3 | Satu pengguna paling banyak satu toko (`pemilik_id` unik). | `unique` pada `toko.pemilik_id`, izin `toko.buka`, `ModerasiToko`, `TokoPolicy` |
-| LP-4 | Produk tampil di katalog hanya jika berstatus aktif DAN tokonya aktif. Produk draf dan toko menunggu tidak bocor ke publik. | `Produk::scopeTampil()`, `KatalogController` |
-| LP-5 | Penjual tidak membeli dari tokonya sendiri. | Sebagian: `PenyusunBelanja::pilah`, `LayananKeranjang::aturButir` |
-| LP-6 | Angka klien diabaikan pada simulasi belanja dan keranjang; harga dan total dihitung ulang dari server. | Sebagian: `SimulasiBelanjaRequest`, `PenyusunBelanja`, `LayananKeranjang::lihat` |
-| LP-7 | Kata sandi hanya disimpan sebagai hash, tidak pernah dikirim ke klien. | `RegistrasiController`, `PenggunaResource` |
-| LP-8 | Kolom siluman (`id`, `status`) diabaikan saat registrasi publik. | `RegistrasiRequest` |
-| LP-9 | Setiap mutasi dompet harus tercatat; tidak ada penghapusan atau pembaruan langsung. | `app/Services/BukuBesar.php`, model `MutasiSaldo`, `PeriksaBuku` |
-| LP-10 | Perpindahan status pesanan diputuskan di satu tempat; yang tidak tertulis berarti tidak boleh. | Sebagian: `App\Domain\Pesanan\AturanTransisi`; belum dipakai sampai tabel pesanan lahir |
-| LP-11 | Permintaan non-JSON ditolak dengan respons JSON konsisten. | Middleware `PaksaJson`, `bootstrap/app.php` |
-| LP-12 | Header `X-Request-Id` ditambahkan pada setiap respons API. | Middleware `IdPermintaan`, `bootstrap/app.php` |
-| LP-13 | Pesan galat mengikuti struktur respons API yang terstandardisasi. | `ResponsApi`, `PenanganGalatApi`, `bootstrap/app.php` |
+| LP-4 | Produk tampil di katalog hanya jika berstatus aktif DAN tokonya aktif. Stok dijaga atomik lewat penguncian baris (`lockForUpdate`). | `Produk::scopeTampil()`, `KatalogController`, `PenjagaStok`, `LayananCheckout`, `RebutanStok`, `PenyesuaianStok` |
+| LP-5 | Penjual tidak membeli dari tokonya sendiri. | `PenyusunBelanja::pilah`, `LayananKeranjang::aturButir`, `LayananCheckout` |
+| LP-6 | Angka klien diabaikan pada simulasi belanja, keranjang, dan checkout; harga dan total dihitung ulang dari server. | `SimulasiBelanjaRequest`, `PenyusunBelanja`, `LayananKeranjang::lihat`, `LayananCheckout` |
+| LP-7 | Hubungan 1:1 antara checkout dan pembayaran; arah foreign key menunjuk ke checkout. Kata sandi hanya disimpan sebagai hash. | `buat_tabel_pembayaran.php`, model `Pembayaran`, `Checkout`, `LayananPembayaran`, `RegistrasiController` |
+| LP-8 | Komisi dihitung dari subtotal saja, ongkir utuh untuk penjual. Kolom siluman diabaikan saat registrasi. | `PenghitungBelanja`, `PenyusunBelanja`, `RegistrasiRequest` |
+| LP-9 | Setiap mutasi dompet harus tercatat. Format penomoran pesanan unik berbasis tanggal WIB (`YYYYMMDD-{id}`). | `app/Services/BukuBesar.php`, `MutasiSaldo`, `PeriksaBuku`, `PenomorPesanan` |
+| LP-10 | Perpindahan status pesanan diputuskan di satu tempat; pembatalan otomatis 24 jam dengan pemulihan stok urut ID produk. | `AturanTransisi`, `MesinStatusPesanan`, `PembatalanOtomatis`, `BatalkanKedaluwarsa` |
+| LP-11 | Idempotensi mutasi krusial via `Idempotency-Key`; komit atomik catatan kunci dan efek transaksinya. | Middleware `Idempoten`, `KunciIdempotensi`, `CheckoutController`, `ProdukSayaController@stok`, `RuteIdempotenTest`, `KunciGanda` |
+| LP-12 | Webhook pembayaran diverifikasi tanda tangan HMAC-SHA256 mentah, toleransi replay attack, dan menahan dana di escrow tepat satu kali. | `TandaTanganGateway`, `WebhookPembayaranController`, `LayananPembayaran::tahanDana`, `WebhookGanda` |
+| LP-13 | Idempotensi pemrosesan webhook (pembayaran kembar hanya menghasilkan satu kali mutasi escrow dan respons 200 `sudah_diproses`). | `LayananPembayaran::terima`, `WebhookPembayaranController` |
 | LP-14 | Kunci sesi berbentuk awalan, pengenal, dan rahasia; kedaluwarsa 7 hari, menganggur 2 jam. | `KunciSesi`, `PenerbitSesi`, `Sesi::scopeBerlaku`, `lapak:pangkas-sesi` |
-| LP-15 | Tindakan peka menuntut konfirmasi ulang kata sandi (sesi segar 10 menit). | Sebagian: `SesiSegar`, `SesiController::konfirmasi`; dipakai pada cabut sesi, riwayat mutasi, perubahan peran, keputusan moderasi, dan buku besar |
+| LP-15 | Tindakan peka menuntut konfirmasi ulang kata sandi (sesi segar 10 menit) atau checkout bernilai besar. | `SesiSegar`, `SesiController::konfirmasi`, `BukuBesarController`, `CheckoutController` |
 | LP-16 | Berkas bersama (rute, seeder, bootstrap) harus ditinjau sesuai CODEOWNERS. | `.github/CODEOWNERS` |
 | LP-17 | Log AI wajib diisi setiap anggota atau ditulis "tidak memakai AI pada sesi ini". | `docs/log-ai/` |

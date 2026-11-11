@@ -86,3 +86,18 @@
   - Menjalankan `./vendor/bin/pint --test` (seluruh berkas lulus).
   - Menjalankan pengujian Pest di SQLite dan MySQL 8 InnoDB.
   - Menjalankan simulasi balapan `php artisan lapak:balapan --skenario=webhook-ganda` di MySQL InnoDB (6 proses serentak, lulus 100% tanpa pelanggaran).
+
+
+## Sesi 4 — Penutup: Papan Integrasi Final dan Serah Terima ke Sesi 5
+
+- **Alat**: Google Gemini / Antigravity
+- **Bagian yang dibantu**:
+  - Memverifikasi status akhir seluruh 13 pull request pada papan integrasi `docs/sesi/SESI-4.md`.
+  - Mengawal penyelesaian konflik dan temuan balapan kebuntuan (*deadlock*) pada skenario `batal-saat-checkout` hingga terbit dan di-merge PR P1 (`sesi-4/urutan-kunci-rani`).
+  - Memutakhirkan catatan penegakan aturan bisnis LP-4, LP-7, LP-9, LP-10, LP-11, LP-12, LP-13, dan LP-15 pada `docs/ATURAN-BISNIS.md`.
+  - Menyusun rangkuman penutup sesi, hasil uji konkurensi di atas MySQL 8 InnoDB, dan titipan serah terima untuk Sesi 5 (audit log & observabilitas).
+- **Cara verifikasi**:
+  - Menjalankan `./vendor/bin/pint --test` (seluruh berkas lulus format).
+  - Menjalankan seluruh pengujian `./vendor/bin/pest` di SQLite dan MySQL 8 InnoDB (380 tests passed, 1.607 assertions).
+  - Menjalankan verifikasi buku besar `php artisan lapak:periksa-buku` (buku besar seimbang, 0 pelanggaran).
+  - Menjalankan seluruh skenario balapan konkurensi MySQL InnoDB (`php artisan lapak:balapan --semua`).
