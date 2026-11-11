@@ -43,7 +43,7 @@ final class RebutanCheckout extends SkenarioBalapan
         $pembeliData = [];
 
         foreach (range(1, $this->jumlahPembalap()) as $i) {
-            $pembeli = Pengguna::factory()->create();
+            $pembeli = Pengguna::factory()->pembeli()->create();
             $alamat = Alamat::factory()->for($pembeli)->create();
 
             if (Schema::hasTable('keranjang')) {

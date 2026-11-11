@@ -34,7 +34,7 @@ final class KunciGanda extends SkenarioBalapan
 
     public function siapkan(): array
     {
-        $pembeli = Pengguna::factory()->create();
+        $pembeli = Pengguna::factory()->pembeli()->create();
         $alamat = Alamat::factory()->for($pembeli)->create();
         $produk = Produk::factory()->create(['stok' => 50]);
 
