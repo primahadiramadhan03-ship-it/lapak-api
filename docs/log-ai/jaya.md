@@ -44,3 +44,21 @@
   - Menjalankan `php artisan lapak:balapan serempak` untuk kalibrasi runner MySQL (5 pembalap serentak).
   - Menjalankan `php artisan lapak:balapan --skenario=IdempotensiGanda` dan memverifikasi integritas balapan multi-proses (1 mutasi tercipta, 4 konflik/dicegah, 0 kebocoran data).
   - Menjalankan `./vendor/bin/pint --test` dan memastikan 0 style issues.
+
+## Sesi 4 — B5 Klasifikasi Rute POST, Skenario Lintas Domain, dan CI MySQL
+
+**Bagian yang dibantu**:
+  - Menyusun pengujian klasifikasi rute POST `tests/Feature/Sistem/RuteIdempotenTest.php` untuk menegakkan aturan LP-11 (`POST_BERKUNCI` dan `POST_TANPA_KUNCI` dengan alasan tertulis > 20 karakter).
+  - Memperbarui perintah `lapak:balapan` (`app/Console/Commands/Balapan.php`) dengan opsi `--semua` untuk menjalankan seluruh skenario balapan berturut-turut.
+  - Membangun tiga skenario balapan lintas domain di `app/Balapan/`:
+    - `KunciGanda.php`: menguji indeks unik idempotensi pada checkout serentak dengan kunci identik (LP-11).
+    - `RebutanCheckout.php`: menguji 12 pembeli berebut stok terbatas lewat seluruh lapisan checkout (LP-4, LP-9, LP-11).
+    - `BatalSaatCheckout.php`: mempertemukan pembatalan otomatis dan pembelian produk untuk memverifikasi Tangga Kunci Baris dan mencegah deadlock MySQL 1213.
+  - Menambahkan job `kualitas-mysql` pada alur kerja CI `.github/workflows/ci.yml` dengan service container `mysql:8.0` InnoDB untuk pengujian Pest dan uji balapan konkurensi.
+
+**Cara memverifikasi hasil**:
+  - Menjalankan `./vendor/bin/pest tests/Feature/Sistem/RuteIdempotenTest.php` (menghasilkan 2 failed dan 2 passed saat draf karena menunggu rute checkout, alamat, stok, dan webhook dari B1–B4).
+  - Menjalankan `./vendor/bin/pint --test` dan memastikan seluruh berkas lulus standar format Laravel Pint.
+  - Menjalankan `php artisan lapak:balapan --daftar` dan memastikan kelima skenario terdaftar.
+  - Menjalankan `./vendor/bin/pest` untuk memastikan pengujian lokal tetap hijau.
+
