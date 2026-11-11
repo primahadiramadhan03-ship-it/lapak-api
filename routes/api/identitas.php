@@ -42,6 +42,17 @@ Route::middleware('auth:sesi')->group(function (): void {
         ->group(function (): void {
             Route::get('/', [AlamatController::class, 'index'])
                 ->name('index');
+
+            Route::post('/', [AlamatController::class, 'store'])
+                ->name('store');
+
+            Route::put('/{id}/utama', [AlamatController::class, 'utama'])
+                ->whereNumber('id')
+                ->name('utama');
+
+            Route::delete('/{id}', [AlamatController::class, 'destroy'])
+                ->whereNumber('id')
+                ->name('destroy');
         });
 
     // Pintu admin untuk mengelola peran pengguna.
