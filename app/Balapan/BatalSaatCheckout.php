@@ -55,8 +55,8 @@ final class BatalSaatCheckout extends SkenarioBalapan
             $induk = Checkout::factory()->create();
             $pesanan = Pesanan::factory()->for($induk)->for($toko)->create();
             // Nomor produk besar disimpan lebih dulu.
-            ButirPesanan::factory()->for($pesanan)->create(['produk_id' => $besar->id]);
-            ButirPesanan::factory()->for($pesanan)->create(['produk_id' => $kecil->id]);
+            ButirPesanan::factory()->for($pesanan)->create(['produk_id' => $besar->id, 'kuantitas' => 1]);
+            ButirPesanan::factory()->for($pesanan)->create(['produk_id' => $kecil->id, 'kuantitas' => 1]);
             Pembayaran::factory()->for($induk)->create(['batas_bayar_pada' => now()->subMinute()]);
             $checkout[] = $induk->id;
         }

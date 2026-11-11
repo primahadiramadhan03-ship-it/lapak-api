@@ -243,7 +243,12 @@ final class Balapan extends Command
             $this->line('');
             $this->comment('Rincian Akhir:');
             foreach ($evaluasi['rincian'] as $k => $v) {
-                $this->line("  - {$k}: ".(is_bool($v) ? ($v ? 'true' : 'false') : $v));
+                if (is_array($v)) {
+                    $isi = empty($v) ? 'kosong' : implode(', ', $v);
+                    $this->line("  - {$k}: [{$isi}]");
+                } else {
+                    $this->line("  - {$k}: ".(is_bool($v) ? ($v ? 'true' : 'false') : $v));
+                }
             }
         }
     }
