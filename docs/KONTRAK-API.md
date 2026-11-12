@@ -191,6 +191,63 @@ Klien menyertakan header:
 
 ---
 
+## Log audit (LP-19)
+
+Setiap tindakan yang menyentuh uang, stok, atau kewenangan meninggalkan satu baris pada `log_audit`.
+Daftar peristiwanya ada di `App\Enums\PeristiwaAudit` dan hanya ditulis di berkas itu.
+
+### Satu pintu penulisan
+
+Hanya `PencatatAudit::catat()` yang menulis tabel ini. Tanda tangannya:
+
+```php
+catat(
+    PeristiwaAudit $peristiwa,
+    ?Pengguna $pelaku = null,
+    ?string $sasaran = null,
+    array $rincian = [],
+): LogAudit
+```
+
+- `pelaku` diisi `null` bila pelakunya sistem atau gerbang pembayaran.
+- `sasaran` berbentuk `jenis:pengenal`, misalnya `pesanan:LPK-20261027-000412` atau `pengguna:8`.
+- `rincian` hanya boleh memuat teks, bilangan bulat, boolean, null, dan larik. Kata kunci
+  `kata_sandi`, `kunci`, `hash_kunci`, `rahasia`, dan `tanda_tangan` ditolak di tingkat mana pun
+  dengan `LogicException`, karena rahasia yang telanjur masuk tidak dapat dihapus tanpa memutus rantai.
+
+Dua aturan pemakaian bagi setiap domain:
+
+1. `catat()` dipanggil di dalam transaksi yang sama dengan tindakannya, sehingga tindakan dan
+   jejaknya tersimpan bersama atau batal bersama.
+2. `catat()` adalah langkah terakhir sebelum transaksi selesai. Tidak ada kunci baris lain yang
+   diambil sesudahnya (`docs/PETA-SKEMA.md`, anak tangga terakhir).
+
+### Bentuk rantai
+
+```text
+hash baris = SHA-256( hash baris sebelumnya + "\n" + isi baris dalam bentuk kanonik )
+```
+
+Isi yang dilindungi adalah `peristiwa`, `pelaku_id`, `sasaran`, `rincian`, `id_permintaan`, dan
+`dicatat_pada` dalam bentuk `Y-m-d H:i:s`. Bentuk kanonik mengurutkan kunci objek menurut abjad di
+setiap tingkat dan menolak bilangan pecahan maupun objek.
+
+Tabel `rantai_audit` berisi tepat satu baris kepala rantai yang dibuat oleh migrasi: `hash_terakhir`
+dan `jumlah`. Baris pertama menyambung ke 64 angka nol. Menghapus baris terakhir tidak memutus
+sambungan apa pun, maka panjang rantai dicatat di kepala dan ikut dibandingkan saat verifikasi.
+
+### Respons galat
+
+| Keadaan | Jawaban |
+| --- | --- |
+| `rincian` memuat kunci terlarang | `LogicException`, transaksi tidak menulis apa pun |
+| Kepala rantai tidak ada | `LogicException`, jalankan migrasi |
+| Baris diubah atau dihapus lewat model | `LogicException`, baris tetap seperti semula |
+
+Log audit tidak pernah tampil pada API publik. Pembacaannya disediakan bagi auditor pada rilis 1.0.0.
+
+---
+
 ## Webhook pembayaran
 
 - `POST /webhook/pembayaran` adalah satu-satunya rute tulis tanpa kunci sesi. Pemanggilnya

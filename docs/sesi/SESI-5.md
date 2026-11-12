@@ -4,7 +4,7 @@
 
 | PR | Unggahan | Cabang | Penulis | Isi / Pekerjaan | Peninjau | Menunggu | Status |
 |---|---|---|---|---|---|---|---|
-| #47 | Pembuka | `sesi-5/pembuka-sekar` | Sekar (Jaya) | Papan sesi, daftar periksa rilis, dua anak tangga kunci, penataan dua berkas bersama | Bambang (Prima), Bagas (Syafiq) | - | Siap Review |
+| #47 | Pembuka | `sesi-5/pembuka-sekar` | Sekar (Jaya) | Papan sesi, daftar periksa rilis, dua anak tangga kunci, penataan dua berkas bersama | Bambang (Prima), Bagas (Syafiq) | - | Merged |
 | #48 | A1 | `sesi-5/kontrak-audit-sekar` | Sekar (Jaya) | Tabel log audit dan kepala rantai, daftar peristiwa, rantai hash, PencatatAudit versi kontrak | Bambang (Prima), Bagas (Syafiq) | #47 | Belum |
 | #49 | A2 | `sesi-5/kontrak-dana-dimas` | Dimas (Risa) | Tabel pencairan, dompet penahan, LayananDana, tagihan dapat dibatalkan | Sekar (Jaya), Bambang (Prima) | #47 | Belum |
 | #50 | A3 | `sesi-5/kontrak-pesanan-rani` | Rani (Brili) | Cap waktu proses, LayananPesanan, pendukung uji | Dimas (Risa), Sekar (Jaya) | #48, #49 | Belum |
@@ -148,7 +148,7 @@ Diisi pada H+6, maksimal delapan butir, tanpa baris "sebagian". Kandidat awal:
 5. Penyelarasan dua tag (`v1.0.0` dan `sesi-5`) masih manual.
 6. Rekap sesi bergantung pada Docker pada lingkungan pengembangan tim.
 7. Belum ada latihan mandiri Sesi 4 yang masuk; jumlah uji mengikuti angka riil repo.
-8. Temuan kandidat lain menyusul bila muncul pada verifikasi klon baru.
+8. Kolom `id_permintaan` pada `log_audit` belum terisi: middleware `IdPermintaan` baru menaruh UUID di header `X-Request-Id`, belum di request attribute yang dibaca `PencatatAudit`.
 
 ## Bukti dan Luaran
 
