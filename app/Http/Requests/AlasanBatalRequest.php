@@ -26,4 +26,3 @@ final class AlasanBatalRequest extends FormRequest
         return (string) $this->validated('alasan');
     }
 }
-

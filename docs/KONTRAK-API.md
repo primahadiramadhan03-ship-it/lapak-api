@@ -188,7 +188,6 @@ Klien menyertakan header:
 3. **Komit Satu Transaksi**: Catatan pada tabel `kunci_idempotensi` dicatat sebelum anak tangga pertama dan dikomit bersama dengan efek transaksi dalam satu blok transaksi database atomik. Jika transaksi gagal, kunci tidak akan tersimpan (rollback).
 4. **Middleware `idempoten`**: Disediakan alias `'idempoten'` (opsional: memeriksa kunci bila ada) atau `'idempoten:wajib'` (menolak dengan `422 Unprocessable Entity` bila header absen).
 
-
 ---
 
 ## Log audit (LP-19)
@@ -261,7 +260,6 @@ Log audit tidak pernah tampil pada API publik. Pembacaannya disediakan bagi audi
 - Kabar yang sama boleh tiba berkali-kali. Yang pertama dijawab `"hasil": "dilunasi"`, sisanya
   `"hasil": "sudah_diproses"`, dan uangnya dibukukan satu kali.
 
-
 ---
 
 ## Dana, escrow, dan pencairan (LP-8, LP-12, LP-18)
@@ -287,3 +285,28 @@ Pengajuan pencairan saldo penjual ditahan terlebih dahulu di dompet sistem `pena
 (`JenisDompet::Penahan`, arah mutasi `tahan_pencairan` -> `pencairan` / `batal_pencairan`)
 sebelum diputuskan staf keuangan lain (`pengaju_id !== diputuskan_oleh`, LP-18) dengan status
 `menunggu`, `disetujui`, atau `ditolak`.
+
+---
+
+## Daur hidup pesanan (LP-10, LP-12)
+
+Setelah checkout, sebuah pesanan bergerak melalui `App\Services\LayananPesanan` sebagai pintu tunggal mutasi status pesanan:
+
+1. **Menunggu Pembayaran**:
+   - Dibuat saat checkout dengan status `menunggu_pembayaran`.
+   - Jika batas bayar lewat, penjadwal membatalkan seluruh checkout via `batalkanCheckout()` dengan pelaku `PelakuPesanan::Sistem`.
+   - Jika pembeli membatalkan sebelum membayar, pembatalan dilakukan pada tingkat checkout via `batalkanCheckout()`. Pembatalan per-pesanan pada tahap ini ditolak dengan `409 Conflict` (LP-10).
+2. **Dibayar**:
+   - Tagihan dilunasi oleh webhook pembayaran, status pesanan berpindah ke `dibayar`, dan nilai total pesanan masuk ke dompet sistem `escrow`.
+3. **Dikemas**:
+   - Penjual menyiapkan pesanan via `kemas(Pesanan $pesanan)`, status berpindah ke `dikemas` dan mengisi timestamp `dikemas_pada`.
+4. **Dikirim**:
+   - Penjual memasukkan nomor resi ekspedisi via `kirim(Pesanan $pesanan, string $nomorResi)`, status berpindah ke `dikirim`, mengisi `dikirim_pada` dan `nomor_resi`.
+5. **Selesai**:
+   - Pembeli mengonfirmasi pesanan telah sampai via `terima(Pesanan $pesanan, PelakuPesanan $oleh, ?Pengguna $pelaku)`, status berpindah ke `selesai`, mengisi `selesai_pada`.
+   - Pelepasan dana terjadi atomik di dalam satu transaksi: komisi dipotong ke dompet `pendapatan`, sisa hasil penjualan masuk ke dompet `penjual`, dan peristiwa audit `dana.dilepas` dicatat.
+6. **Dibatalkan**:
+   - Pesanan berbayar (status `dibayar` atau `dikemas`) dapat dibatalkan oleh pembeli maupun penjual via `batalkan(Pesanan $pesanan, PelakuPesanan $oleh, ?Pengguna $pelaku, string $alasan)`.
+   - Stok dikembalikan dengan pengurutan ID produk menaik (menghindari deadlock 1213).
+   - Seluruh dana pesanan dikembalikan utuh dari dompet `escrow` ke `eksternal`.
+   - Peristiwa audit `pesanan.dibatalkan` dan `dana.dikembalikan` dicatat.
