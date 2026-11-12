@@ -107,7 +107,7 @@ final class PelepasanSerentak extends SkenarioBalapan
         return app(GembokCheckout::class)->dalam($pasang['checkout_id'], function () use ($pasang): string {
             $pesanan = Pesanan::query()->lockForUpdate()->findOrFail($pasang['pesanan_id']);
             app(MesinStatusPesanan::class)->pindahkan($pesanan, StatusPesanan::Selesai, PelakuPesanan::Pembeli);
-            app(LayananDana::class)->lepas($pesanan);
+            app(LayananDana::class)->lepaskan($pesanan);
 
             return 'dilepas';
         });

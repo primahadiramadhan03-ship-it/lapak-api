@@ -30,15 +30,9 @@ final class Pencairan extends Model
     }
 
     /** @return BelongsTo<Pengguna, $this> */
-    public function pengguna(): BelongsTo
+    public function pengaju(): BelongsTo
     {
-        return $this->belongsTo(Pengguna::class, 'pengguna_id');
-    }
-
-    /** @return BelongsTo<Dompet, $this> */
-    public function dompet(): BelongsTo
-    {
-        return $this->belongsTo(Dompet::class, 'dompet_id');
+        return $this->belongsTo(Pengguna::class, 'pengaju_id');
     }
 
     /** @return BelongsTo<Pengguna, $this> */

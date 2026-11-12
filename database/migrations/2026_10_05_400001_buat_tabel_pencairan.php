@@ -9,25 +9,26 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Tabel pengajuan pencairan saldo penjual ke rekening tujuan.
-     * Putusan dilakukan oleh staf keuangan berbeda dari pemohon (aturan empat mata).
+     * LP-18: Tabel pengajuan pencairan saldo penjual ke rekening tujuan.
+     * Putusan dilakukan oleh staf keuangan berbeda dari pengaju (aturan empat mata).
      */
     public function up(): void
     {
         Schema::create('pencairan', function (Blueprint $tabel) {
             $tabel->id();
-            $tabel->string('kode', 30)->unique();
-            $tabel->foreignId('pengguna_id')->constrained('pengguna')->restrictOnDelete();
-            $tabel->foreignId('dompet_id')->constrained('dompet')->restrictOnDelete();
+            // Yang disebut penjual dan staf keuangan, misalnya CAIR-01K7...
+            $tabel->string('kode', 31)->unique();
+            $tabel->foreignId('pengaju_id')->constrained('pengguna')->restrictOnDelete();
             $tabel->unsignedBigInteger('jumlah_rupiah');
-            $tabel->string('rekening_tujuan', 160);
+            $tabel->string('rekening_tujuan', 80);
             $tabel->string('status', 20)->index();
+            // Selalu orang yang berbeda dari pengaju (LP-18).
             $tabel->foreignId('diputuskan_oleh')->nullable()->constrained('pengguna')->restrictOnDelete();
-            $tabel->string('alasan_tolak', 200)->nullable();
             $tabel->timestamp('diputuskan_pada')->nullable();
+            $tabel->string('catatan', 200)->nullable();
             $tabel->timestamps();
 
-            $tabel->index(['pengguna_id', 'id']);
+            $tabel->index(['pengaju_id', 'id']);
         });
     }
 

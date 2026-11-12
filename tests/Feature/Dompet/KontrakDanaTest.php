@@ -40,8 +40,11 @@ it('status pembayaran memiliki kasus dibatalkan sebagai status akhir', function 
     'dibatalkan' => [StatusPembayaran::Dibatalkan, true],
 ]);
 
-it('dompet seeder membuat dompet penahan secara idempoten dan tidak boleh negatif', function () {
-    expect(JenisDompet::Penahan->bolehNegatif())->toBeFalse();
+it('dompet seeder membuat dompet penahan secara idempoten dan jenis mutasi pencairan tersedia', function () {
+    expect(JenisDompet::Penahan->bolehNegatif())->toBeFalse()
+        ->and(JenisMutasi::TahanPencairan->value)->toBe('tahan_pencairan')
+        ->and(JenisMutasi::BatalPencairan->value)->toBe('batal_pencairan')
+        ->and(JenisMutasi::Pencairan->value)->toBe('pencairan');
 
     $this->seed(DompetSeeder::class);
     $this->seed(DompetSeeder::class);
@@ -55,17 +58,18 @@ it('tabel dan model pencairan menyimpan data tanpa mass assignment dan menjaga r
     $keuangan = Pengguna::factory()->keuangan()->create();
 
     $pencairan = Pencairan::factory()
-        ->for($penjual, 'pengguna')
+        ->for($penjual, 'pengaju')
         ->ditolak('Nomor rekening tidak valid', $keuangan)
         ->create(['jumlah_rupiah' => 150_000]);
 
-    expect($pencairan->status)->toBe(StatusPencairan::Ditolak)
+    expect($pencairan->kode)->toStartWith('CAIR-')
+        ->and($pencairan->status)->toBe(StatusPencairan::Ditolak)
         ->and($pencairan->status->akhir())->toBeTrue()
         ->and(StatusPencairan::Menunggu->akhir())->toBeFalse()
         ->and(StatusPencairan::Disetujui->akhir())->toBeTrue()
         ->and($pencairan->jumlah_rupiah)->toBe(150_000)
-        ->and($pencairan->pengguna->id)->toBe($penjual->id)
-        ->and($pencairan->dompet->kode)->toBe('penjual:'.$penjual->id)
+        ->and($pencairan->catatan)->toBe('Nomor rekening tidak valid')
+        ->and($pencairan->pengaju->id)->toBe($penjual->id)
         ->and($pencairan->pemutus->id)->toBe($keuangan->id)
         ->and($pencairan->getFillable())->toBeEmpty();
 
@@ -98,7 +102,18 @@ it('dompetSistemAtauBuat membuat dompet sistem saat belum ada dan menolak jenis 
         ->toThrow(InvalidArgumentException::class);
 });
 
-it('melepas dana dari escrow ke penjual dan pendapatan sesuai aturan komisi LP-8', function () {
+it('menghitung komisi dari subtotal saja dan ongkir utuh untuk penjual (LP-8)', function () {
+    $pesanan = Pesanan::factory()->make([
+        'subtotal_rupiah' => 200_000,
+        'ongkir_rupiah' => 25_000,
+        'total_rupiah' => 225_000,
+    ]);
+
+    expect($this->dana->komisi($pesanan)->rupiah)->toBe(10_000)
+        ->and($this->dana->bagianPenjual($pesanan)->rupiah)->toBe(215_000);
+});
+
+it('melepas dana dari escrow ke penjual dan pendapatan sesuai aturan komisi LP-8 dan LP-12', function () {
     $this->seed(DompetSeeder::class);
 
     $penjual = Pengguna::factory()->penjual()->create();
@@ -106,7 +121,6 @@ it('melepas dana dari escrow ke penjual dan pendapatan sesuai aturan komisi LP-8
     $checkout = Checkout::factory()->create(['total_rupiah' => 225_000]);
 
     $pesanan = Pesanan::factory()->for($checkout)->for($toko)->create([
-        'nomor' => '20261112-101',
         'status' => StatusPesanan::Dikirim,
         'dibayar_pada' => now(),
         'subtotal_rupiah' => 200_000,
@@ -116,24 +130,25 @@ it('melepas dana dari escrow ke penjual dan pendapatan sesuai aturan komisi LP-8
 
     $eksternal = $this->buku->dompetSistem(JenisDompet::Eksternal);
     $escrow = $this->buku->dompetSistem(JenisDompet::Escrow);
-    $this->buku->pindahkan($eksternal, $escrow, 225_000, JenisMutasi::DanaMasuk, '20261112-101');
+    $this->buku->pindahkan($eksternal, $escrow, 225_000, JenisMutasi::DanaMasuk, $pesanan->nomor);
 
-    $hasil = $this->gembok->dalam($checkout->id, function () use ($pesanan) {
+    $this->gembok->dalam($checkout->id, function () use ($pesanan) {
         $this->mesin->pindahkan($pesanan, StatusPesanan::Selesai, PelakuPesanan::Pembeli);
-
-        return $this->dana->lepas($pesanan);
+        $this->dana->lepaskan($pesanan);
     });
 
     // 5% dari subtotal 200.000 = 10.000; ongkir 25.000 utuh untuk penjual -> 215.000
-    expect($hasil)->toBe(['komisi_rupiah' => 10_000, 'bagian_penjual_rupiah' => 215_000])
-        ->and($this->buku->dompetSistem(JenisDompet::Escrow)->saldo_rupiah)->toBe(0)
+    expect($this->buku->dompetSistem(JenisDompet::Escrow)->saldo_rupiah)->toBe(0)
         ->and($this->buku->dompetSistem(JenisDompet::Pendapatan)->saldo_rupiah)->toBe(10_000)
-        ->and($this->buku->dompetPenjual($penjual)->saldo_rupiah)->toBe(215_000);
+        ->and($this->buku->dompetPenjual($penjual)->saldo_rupiah)->toBe(215_000)
+        ->and(MutasiSaldo::query()->where('rujukan', $pesanan->nomor)->count())->toBe(6);
 
     $this->artisan('lapak:periksa-buku')->assertSuccessful();
 
-    // Pelepasan kedua untuk pesanan yang sama harus ditolak.
-    expect(fn () => $this->gembok->dalam($checkout->id, fn () => $this->dana->lepas($pesanan)))
+    // Dana yang sama tidak boleh keluar dua kali lewat jalan mana pun.
+    expect(fn () => $this->gembok->dalam($checkout->id, fn () => $this->dana->lepaskan($pesanan)))
+        ->toThrow(LogicException::class)
+        ->and(fn () => $this->gembok->dalam($checkout->id, fn () => $this->dana->kembalikan($pesanan)))
         ->toThrow(LogicException::class);
 });
 
@@ -142,7 +157,6 @@ it('mengembalikan dana pesanan berbayar yang dibatalkan dari escrow ke eksternal
 
     $checkout = Checkout::factory()->create(['total_rupiah' => 197_000]);
     $pesanan = Pesanan::factory()->for($checkout)->dibayar()->create([
-        'nomor' => '20261112-102',
         'subtotal_rupiah' => 185_000,
         'ongkir_rupiah' => 12_000,
         'total_rupiah' => 197_000,
@@ -150,36 +164,36 @@ it('mengembalikan dana pesanan berbayar yang dibatalkan dari escrow ke eksternal
 
     $eksternal = $this->buku->dompetSistem(JenisDompet::Eksternal);
     $escrow = $this->buku->dompetSistem(JenisDompet::Escrow);
-    $this->buku->pindahkan($eksternal, $escrow, 197_000, JenisMutasi::DanaMasuk, '20261112-102');
+    $this->buku->pindahkan($eksternal, $escrow, 197_000, JenisMutasi::DanaMasuk, $pesanan->nomor);
 
-    $hasil = $this->gembok->dalam($checkout->id, function () use ($pesanan) {
+    $this->gembok->dalam($checkout->id, function () use ($pesanan) {
         $this->mesin->pindahkan($pesanan, StatusPesanan::Dibatalkan, PelakuPesanan::Pembeli, 'Berubah pikiran');
-
-        return $this->dana->kembalikan($pesanan);
+        $this->dana->kembalikan($pesanan);
     });
 
-    expect($hasil)->toBe(['dikembalikan_rupiah' => 197_000])
-        ->and($this->buku->dompetSistem(JenisDompet::Escrow)->saldo_rupiah)->toBe(0)
+    expect($this->buku->dompetSistem(JenisDompet::Escrow)->saldo_rupiah)->toBe(0)
         ->and($this->buku->dompetSistem(JenisDompet::Eksternal)->saldo_rupiah)->toBe(0);
 
     $mutasiPengembalian = MutasiSaldo::query()->where('jenis', JenisMutasi::Pengembalian)->get();
     expect($mutasiPengembalian)->toHaveCount(2)
-        ->and($mutasiPengembalian->pluck('rujukan')->unique()->all())->toBe([$pesanan->refresh()->nomor]);
+        ->and($mutasiPengembalian->pluck('rujukan')->unique()->all())->toBe([$pesanan->nomor]);
 
     $this->artisan('lapak:periksa-buku')->assertSuccessful();
 
-    // Pengembalian ganda harus ditolak.
+    // Pengembalian ganda atau pelepasan sesudahnya harus ditolak.
     expect(fn () => $this->gembok->dalam($checkout->id, fn () => $this->dana->kembalikan($pesanan)))
+        ->toThrow(LogicException::class)
+        ->and(fn () => $this->gembok->dalam($checkout->id, fn () => $this->dana->lepaskan($pesanan)))
         ->toThrow(LogicException::class);
 });
 
-it('menolak operasi LayananDana di luar transaksi atau pada status yang tidak sah', function () {
+it('menolak lepaskan selain status selesai (termasuk dikirim) dan menolak kembalikan selain dibatalkan berbayar', function () {
     // Tutup transaksi milik RefreshDatabase dulu untuk meniru panggilan tanpa transaksi.
     DB::rollBack();
 
     try {
         $tiruan = new Pesanan;
-        expect(fn () => $this->dana->lepas($tiruan))->toThrow(LogicException::class)
+        expect(fn () => $this->dana->lepaskan($tiruan))->toThrow(LogicException::class)
             ->and(fn () => $this->dana->kembalikan($tiruan))->toThrow(LogicException::class);
     } finally {
         DB::beginTransaction();
@@ -188,20 +202,28 @@ it('menolak operasi LayananDana di luar transaksi atau pada status yang tidak sa
     $this->seed(DompetSeeder::class);
 
     $belumDibayar = Pesanan::factory()->create(['status' => StatusPesanan::MenungguPembayaran]);
+    $dibayar = Pesanan::factory()->dibayar()->create();
+    $dikemas = Pesanan::factory()->create(['status' => StatusPesanan::Dikemas, 'dibayar_pada' => now()]);
+    $dikirim = Pesanan::factory()->create(['status' => StatusPesanan::Dikirim, 'dibayar_pada' => now()]);
+    $selesai = Pesanan::factory()->create(['status' => StatusPesanan::Selesai, 'dibayar_pada' => now()]);
     $dibatalkanTanpaBayar = Pesanan::factory()->create([
         'status' => StatusPesanan::Dibatalkan,
         'dibayar_pada' => null,
         'dibatalkan_pada' => now(),
     ]);
-    $dibayar = Pesanan::factory()->dibayar()->create();
-    $dikirim = Pesanan::factory()->create(['status' => StatusPesanan::Dikirim, 'dibayar_pada' => now()]);
 
-    DB::transaction(function () use ($belumDibayar, $dibatalkanTanpaBayar, $dibayar, $dikirim) {
-        expect(fn () => $this->dana->lepas($belumDibayar))->toThrow(LogicException::class)
-            ->and(fn () => $this->dana->lepas($dibayar))->toThrow(LogicException::class)
+    DB::transaction(function () use ($belumDibayar, $dibayar, $dikemas, $dikirim, $selesai, $dibatalkanTanpaBayar) {
+        expect(fn () => $this->dana->lepaskan($belumDibayar))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->lepaskan($dibayar))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->lepaskan($dikemas))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->lepaskan($dikirim))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->lepaskan($dibatalkanTanpaBayar))->toThrow(LogicException::class)
             ->and(fn () => $this->dana->kembalikan($belumDibayar))->toThrow(LogicException::class)
-            ->and(fn () => $this->dana->kembalikan($dibatalkanTanpaBayar))->toThrow(LogicException::class)
-            ->and(fn () => $this->dana->kembalikan($dikirim))->toThrow(LogicException::class);
+            ->and(fn () => $this->dana->kembalikan($dibayar))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->kembalikan($dikemas))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->kembalikan($dikirim))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->kembalikan($selesai))->toThrow(LogicException::class)
+            ->and(fn () => $this->dana->kembalikan($dibatalkanTanpaBayar))->toThrow(LogicException::class);
     });
 });
 
@@ -214,10 +236,9 @@ it('melepas beberapa pesanan milik penjual baru secara berurutan hanya membuat s
     $eksternal = $this->buku->dompetSistem(JenisDompet::Eksternal);
     $escrow = $this->buku->dompetSistem(JenisDompet::Escrow);
 
-    foreach (['20261112-201', '20261112-202'] as $nomor) {
+    foreach (range(1, 2) as $i) {
         $checkout = Checkout::factory()->create(['total_rupiah' => 110_000]);
         $pesanan = Pesanan::factory()->for($checkout)->for($toko)->create([
-            'nomor' => $nomor,
             'status' => StatusPesanan::Dikirim,
             'dibayar_pada' => now(),
             'subtotal_rupiah' => 100_000,
@@ -225,11 +246,11 @@ it('melepas beberapa pesanan milik penjual baru secara berurutan hanya membuat s
             'total_rupiah' => 110_000,
         ]);
 
-        $this->buku->pindahkan($eksternal, $escrow, 110_000, JenisMutasi::DanaMasuk, $nomor);
+        $this->buku->pindahkan($eksternal, $escrow, 110_000, JenisMutasi::DanaMasuk, $pesanan->nomor);
 
         $this->gembok->dalam($checkout->id, function () use ($pesanan) {
             $this->mesin->pindahkan($pesanan, StatusPesanan::Selesai, PelakuPesanan::Sistem);
-            $this->dana->lepas($pesanan);
+            $this->dana->lepaskan($pesanan);
         });
     }
 
@@ -242,7 +263,6 @@ it('melepas beberapa pesanan milik penjual baru secara berurutan hanya membuat s
 });
 
 it('skenario balapan pelepasan-serentak tetap aman meski dipanggil tanpa proses paralel tambahan', function () {
-    // Memastikan helper skenario tersedia dengan nama dan jumlah pembalap yang tepat
     $skenario = new PelepasanSerentak;
 
     expect($skenario->nama())->toBe('pelepasan-serentak')

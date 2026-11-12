@@ -107,13 +107,13 @@
 
 - **Alat**: Google Gemini / Antigravity
 - **Bagian yang dibantu**:
-  - Menambahkan kasus `Dibatalkan = 'dibatalkan'` pada enum `StatusPembayaran` serta memperbarui `akhir()`.
-  - Menambahkan `JenisDompet::Penahan` serta pembaruan `DompetSeeder` agar dompet `penahan` dibuat secara idempoten.
-  - Membuat migrasi `2026_10_05_400001_buat_tabel_pencairan.php`, enum `StatusPencairan`, model `Pencairan`, dan `PencairanFactory`.
+  - Menambahkan kasus `StatusPembayaran::Dibatalkan`, memperbarui `akhir()`, menambahkan `LayananPembayaran::tandaiDibatalkan()`, dan menolak webhook pada `terima()` bila tagihan berstatus `dibatalkan` (`409 LP-10`).
+  - Menambahkan `JenisDompet::Penahan`, `JenisMutasi::TahanPencairan` serta `JenisMutasi::BatalPencairan`, dan pembaruan `DompetSeeder` agar dompet `penahan` dibuat secara idempoten.
+  - Menyesuaikan migrasi `2026_10_05_400001_buat_tabel_pencairan.php` (`kode` 31, `pengaju_id`, `rekening_tujuan` 80, `catatan`), enum `StatusPencairan`, model `Pencairan`, dan `PencairanFactory`.
   - Menambahkan metode `BukuBesar::dompetPenjualAtauBuat()` dan `dompetSistemAtauBuat()` berbasis savepoint dan baca ulang `lockForUpdate()` yang aman di bawah `REPEATABLE-READ`.
-  - Mengimplementasikan `LayananDana` sebagai pintu tunggal dana keluar dari `escrow` (`lepas()` ke penjual dan `pendapatan` sesuai aturan komisi LP-8, serta `kembalikan()` ke `eksternal` saat pembatalan pesanan berbayar), menjaga urutan kunci dompet sistem lalu dompet penjual.
-  - Menambahkan skenario balapan MySQL InnoDB `PelepasanSerentak` (`pelepasan-serentak`) dan rangkaian pengujian `tests/Feature/Dompet/KontrakDanaTest.php`.
+  - Mengimplementasikan `LayananDana` (`komisi()`, `bagianPenjual()`, `lepaskan()`, `kembalikan()`) dengan penjaga status ketat (`Selesai` saja untuk `lepaskan()`, `Dibatalkan` berbayar saja untuk `kembalikan()`) serta penguncian dompet sistem lalu dompet penjual urut `id`.
+  - Menambahkan dokumentasi kontrak pada `docs/KONTRAK-API.md`, skenario balapan `PelepasanSerentak` (`pelepasan-serentak`), serta pengujian pada `KontrakDanaTest` dan `PembayaranTest`.
 - **Cara verifikasi**:
-  - Menjalankan `./vendor/bin/pint --test` (268 berkas lulus format).
-  - Menjalankan `./vendor/bin/pest` di SQLite dan MySQL 8 InnoDB (393 passed, 1.663 assertions).
+  - Menjalankan `./vendor/bin/pint --test` (275 berkas lulus format).
+  - Menjalankan `./vendor/bin/pest` di SQLite dan MySQL 8 InnoDB (416 passed, 1.729 assertions).
   - Menjalankan `php artisan lapak:balapan pelepasan-serentak` di MySQL 8 InnoDB (4/4 proses serentak lulus tanpa deadlock/duplikat) dilanjutkan `php artisan lapak:periksa-buku` (0 pelanggaran).

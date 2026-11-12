@@ -16,28 +16,35 @@ use Illuminate\Support\Facades\DB;
 use LogicException;
 
 /**
- * Satu-satunya jalan dana keluar dari dompet escrow (melepas ke penjual atau
- * mengembalikan ke pembeli). Seluruh pemanggil wajib berada di dalam transaksi
- * (GembokCheckout) agar urutan kunci baris pesanan -> dompet terjaga.
+ * Jalan keluar dana dari escrow. Ada tepat dua: dilepas kepada penjual, atau dikembalikan
+ * kepada pembeli. Keduanya dipanggil di dalam GembokCheckout sesaat setelah status pesanan
+ * berubah, sehingga status dan uangnya tidak pernah berbeda cerita.
  */
 final class LayananDana
 {
     public function __construct(private readonly BukuBesar $buku) {}
 
-    /**
-     * Melepas dana pesanan dari escrow ke dompet penjual (dikurangi komisi ke pendapatan).
-     * LP-8: komisi dipotong dari subtotal saja; ongkir diterima utuh oleh penjual.
-     *
-     * @return array{komisi_rupiah: int, bagian_penjual_rupiah: int}
-     */
-    public function lepas(Pesanan $pesanan): array
+    /** LP-8: komisi dihitung dari subtotal produk, dengan pembulatan setengah ke atas milik Uang::persen(). */
+    public function komisi(Pesanan $pesanan): Uang
+    {
+        return Uang::dari($pesanan->subtotal_rupiah)->persen((int) config('lapak.komisi_persen', 5));
+    }
+
+    /** Yang diterima penjual: subtotal dikurangi komisi, ditambah ongkir yang utuh miliknya. */
+    public function bagianPenjual(Pesanan $pesanan): Uang
+    {
+        return Uang::dari($pesanan->total_rupiah)->kurang($this->komisi($pesanan));
+    }
+
+    /** LP-12: pesanan selesai, dana keluar dari escrow menjadi saldo penjual dan komisi. */
+    public function lepaskan(Pesanan $pesanan): void
     {
         $this->pastikanDalamTransaksi();
 
         $terkini = $this->kunciPesanan($pesanan);
 
-        if (! in_array($terkini->status, [StatusPesanan::Dikirim, StatusPesanan::Selesai], true)) {
-            throw new LogicException("Dana pesanan berstatus [{$terkini->status->value}] tidak dapat dilepas ke penjual.");
+        if ($terkini->status !== StatusPesanan::Selesai) {
+            throw new LogicException("Dana hanya dapat dilepas untuk pesanan berstatus selesai (status saat ini: {$terkini->status->value}).");
         }
 
         $penjual = $terkini->toko?->pemilik;
@@ -63,8 +70,8 @@ final class LayananDana
         $this->pastikanBelumKeluarEscrow($escrow, $rujukan);
 
         $komisiPersen = (int) config('lapak.komisi_persen', 5);
-        $komisi = Uang::dari($terkini->subtotal_rupiah)->persen($komisiPersen);
-        $bagianPenjual = Uang::dari($terkini->total_rupiah)->kurang($komisi);
+        $komisi = $this->komisi($terkini);
+        $bagianPenjual = $this->bagianPenjual($terkini);
 
         if ($komisi->rupiah > 0) {
             $this->buku->pindahkan(
@@ -87,32 +94,17 @@ final class LayananDana
                 "Pelepasan dana pesanan {$rujukan}",
             );
         }
-
-        return [
-            'komisi_rupiah' => $komisi->rupiah,
-            'bagian_penjual_rupiah' => $bagianPenjual->rupiah,
-        ];
     }
 
-    /**
-     * Mengembalikan dana pesanan dari escrow ke dompet eksternal (refund pembeli).
-     *
-     * @return array{dikembalikan_rupiah: int}
-     */
-    public function kembalikan(Pesanan $pesanan): array
+    /** Pesanan yang sudah dibayar dan berstatus dibatalkan: seluruh nilainya kembali kepada pembeli. */
+    public function kembalikan(Pesanan $pesanan): void
     {
         $this->pastikanDalamTransaksi();
 
         $terkini = $this->kunciPesanan($pesanan);
 
-        $bolehDibatalkanBerbayar = in_array(
-            $terkini->status,
-            [StatusPesanan::Dibayar, StatusPesanan::Dikemas],
-            true,
-        ) || ($terkini->status === StatusPesanan::Dibatalkan && $terkini->dibayar_pada !== null);
-
-        if (! $bolehDibatalkanBerbayar) {
-            throw new LogicException("Dana pesanan berstatus [{$terkini->status->value}] tidak dapat dikembalikan dari escrow.");
+        if ($terkini->status !== StatusPesanan::Dibatalkan || $terkini->dibayar_pada === null) {
+            throw new LogicException("Dana hanya dapat dikembalikan untuk pesanan berbayar yang berstatus dibatalkan (status saat ini: {$terkini->status->value}).");
         }
 
         $escrow = $this->buku->dompetSistem(JenisDompet::Escrow);
@@ -133,16 +125,12 @@ final class LayananDana
                 "Pengembalian dana pesanan {$rujukan}",
             );
         }
-
-        return [
-            'dikembalikan_rupiah' => $terkini->total_rupiah,
-        ];
     }
 
     private function pastikanDalamTransaksi(): void
     {
         if (DB::transactionLevel() === 0) {
-            throw new LogicException('Operasi dana escrow hanya boleh dijalankan di dalam transaksi.');
+            throw new LogicException('Dana hanya boleh dipindahkan di dalam GembokCheckout.');
         }
     }
 
@@ -178,7 +166,7 @@ final class LayananDana
             ->exists();
 
         if ($sudahKeluar) {
-            throw new LogicException("Dana untuk pesanan [{$rujukan}] sudah pernah dikeluarkan dari escrow.");
+            throw new LogicException("Dana {$rujukan} sudah pernah keluar dari escrow.");
         }
     }
 

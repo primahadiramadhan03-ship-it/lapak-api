@@ -260,3 +260,30 @@ Log audit tidak pernah tampil pada API publik. Pembacaannya disediakan bagi audi
   basis data; selisih satu rupiah pun dijawab 422 `JUMLAH_TIDAK_COCOK` dan tidak melunasi apa pun.
 - Kabar yang sama boleh tiba berkali-kali. Yang pertama dijawab `"hasil": "dilunasi"`, sisanya
   `"hasil": "sudah_diproses"`, dan uangnya dibukukan satu kali.
+
+
+---
+
+## Dana, escrow, dan pencairan (LP-8, LP-12, LP-18)
+
+Dana pembelian yang telah dibayar ditahan di dompet sistem `escrow` selama pesanan berlangsung.
+Pengeluaran dana dari `escrow` hanya melalui `App\Services\LayananDana` di dalam transaksi
+`GembokCheckout` setelah status pesanan berubah melalui `MesinStatusPesanan`:
+
+- `lepaskan(Pesanan $pesanan): void`: hanya sah untuk pesanan berstatus `selesai`. Memindahkan
+  komisi (`komisi(Pesanan)` — persentase atas `subtotal_rupiah` dengan pembulatan setengah ke atas,
+  ongkir utuh untuk penjual) ke dompet `pendapatan`, serta `bagianPenjual(Pesanan)` ke dompet
+  penjual (`penjual:<id>`, dibuat aman secara konkuren saat pertama kali dibutuhkan).
+- `kembalikan(Pesanan $pesanan): void`: hanya sah untuk pesanan berbayar yang berstatus
+  `dibatalkan` (`dibayar_pada` tidak kosong). Mengembalikan seluruh `total_rupiah` ke dompet
+  `eksternal`.
+- Tagihan berstatus `menunggu` dapat dibatalkan pembeli sebelum dibayar melalui
+  `LayananPembayaran::tandaiDibatalkan()` menjadi status akhir `dibatalkan`; webhook pembayaran
+  yang datang sesudahnya ditolak dengan `409` (`LP-10`).
+
+### Pencairan saldo penjual
+
+Pengajuan pencairan saldo penjual ditahan terlebih dahulu di dompet sistem `penahan`
+(`JenisDompet::Penahan`, arah mutasi `tahan_pencairan` -> `pencairan` / `batal_pencairan`)
+sebelum diputuskan staf keuangan lain (`pengaju_id !== diputuskan_oleh`, LP-18) dengan status
+`menunggu`, `disetujui`, atau `ditolak`.
