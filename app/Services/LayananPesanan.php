@@ -104,6 +104,7 @@ final class LayananPesanan
             }
 
             $terkini = $this->mesin->pindahkan($pesanan, StatusPesanan::Dibatalkan, $oleh, $alasan);
+            $terkini->load('butir');
             $this->kembalikanStok(collect([$terkini]));
             $this->dana->kembalikan($terkini);
 

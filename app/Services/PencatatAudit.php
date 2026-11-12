@@ -24,7 +24,7 @@ final class PencatatAudit
         $this->tolakRahasia($rincian);
 
         return DB::transaction(function () use ($peristiwa, $pelaku, $sasaran, $rincian): LogAudit {
-            $kepala = DB::table('rantai_audit')->where('id', 1)->first();
+            $kepala = DB::table('rantai_audit')->where('id', 1)->lockForUpdate()->first();
 
             if ($kepala === null) {
                 throw new LogicException('Kepala rantai audit tidak ada. Jalankan migrasi.');
