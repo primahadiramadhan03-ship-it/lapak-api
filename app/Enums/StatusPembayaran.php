@@ -9,9 +9,10 @@ enum StatusPembayaran: string
     case Menunggu = 'menunggu';
     case Lunas = 'lunas';
     case Kedaluwarsa = 'kedaluwarsa';
+    case Dibatalkan = 'dibatalkan';
 
     public function akhir(): bool
     {
-        return $this === self::Lunas || $this === self::Kedaluwarsa;
+        return $this !== self::Menunggu;
     }
 }

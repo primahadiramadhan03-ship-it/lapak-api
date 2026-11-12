@@ -9,6 +9,7 @@ enum JenisDompet: string
     case Eksternal = 'eksternal';
     case Escrow = 'escrow';
     case Pendapatan = 'pendapatan';
+    case Penahan = 'penahan';
     case Penjual = 'penjual';
 
     public function bolehNegatif(): bool

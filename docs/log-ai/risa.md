@@ -101,3 +101,19 @@
   - Menjalankan seluruh pengujian `./vendor/bin/pest` di SQLite dan MySQL 8 InnoDB (380 tests passed, 1.607 assertions).
   - Menjalankan verifikasi buku besar `php artisan lapak:periksa-buku` (buku besar seimbang, 0 pelanggaran).
   - Menjalankan seluruh skenario balapan konkurensi MySQL InnoDB (`php artisan lapak:balapan --semua`).
+
+
+## Sesi 5 — A2: Kontrak Dana, Pencairan, dan Dompet Penahan
+
+- **Alat**: Google Gemini / Antigravity
+- **Bagian yang dibantu**:
+  - Menambahkan kasus `Dibatalkan = 'dibatalkan'` pada enum `StatusPembayaran` serta memperbarui `akhir()`.
+  - Menambahkan `JenisDompet::Penahan` serta pembaruan `DompetSeeder` agar dompet `penahan` dibuat secara idempoten.
+  - Membuat migrasi `2026_10_05_400001_buat_tabel_pencairan.php`, enum `StatusPencairan`, model `Pencairan`, dan `PencairanFactory`.
+  - Menambahkan metode `BukuBesar::dompetPenjualAtauBuat()` dan `dompetSistemAtauBuat()` berbasis savepoint dan baca ulang `lockForUpdate()` yang aman di bawah `REPEATABLE-READ`.
+  - Mengimplementasikan `LayananDana` sebagai pintu tunggal dana keluar dari `escrow` (`lepas()` ke penjual dan `pendapatan` sesuai aturan komisi LP-8, serta `kembalikan()` ke `eksternal` saat pembatalan pesanan berbayar), menjaga urutan kunci dompet sistem lalu dompet penjual.
+  - Menambahkan skenario balapan MySQL InnoDB `PelepasanSerentak` (`pelepasan-serentak`) dan rangkaian pengujian `tests/Feature/Dompet/KontrakDanaTest.php`.
+- **Cara verifikasi**:
+  - Menjalankan `./vendor/bin/pint --test` (268 berkas lulus format).
+  - Menjalankan `./vendor/bin/pest` di SQLite dan MySQL 8 InnoDB (393 passed, 1.663 assertions).
+  - Menjalankan `php artisan lapak:balapan pelepasan-serentak` di MySQL 8 InnoDB (4/4 proses serentak lulus tanpa deadlock/duplikat) dilanjutkan `php artisan lapak:periksa-buku` (0 pelanggaran).
