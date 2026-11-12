@@ -120,11 +120,27 @@
 /app/Balapan/PenyesuaianStok.php @Syafiq-web
 /app/Balapan/KeranjangGanda.php @Ramadana-Brilliant-Jaya
 /app/Balapan/WebhookGanda.php @risayulia
+/app/Domain/Audit/ @Sultanil
 
-# Berkas yang dikelola integrator (Risa / Dimas di Sesi 4)
-/.github/CODEOWNERS @risayulia
-/docs/ATURAN-BISNIS.md @risayulia
-/docs/sesi/ @risayulia
+/app/Services/LayananPesanan.php @Ramadana-Brilliant-Jaya
+/app/Services/PenyelesaianOtomatis.php @Ramadana-Brilliant-Jaya
+/tests/Pendukung/ @Ramadana-Brilliant-Jaya
+/app/Http/Controllers/PesananTokoController.php @Syafiq-web
+/app/Services/LayananDana.php @risayulia
+/app/Services/LayananPencairan.php @risayulia
+/app/Models/Pencairan.php @risayulia
+/app/Services/PencatatAudit.php @Sultanil
+/app/Services/PemeriksaRantaiAudit.php @Sultanil
+/app/Models/LogAudit.php @Sultanil
+/app/Enums/PeristiwaAudit.php @Sultanil
+/docs/RILIS.md @Sultanil
+/tests/Feature/Sistem/idempoten/ @Sultanil
+/CHANGELOG.md @primahadiramadhan03-ship-it
+
+# Berkas yang dikelola integrator (Jaya / Sekar di Sesi 5)
+/.github/CODEOWNERS @Sultanil
+/docs/ATURAN-BISNIS.md @Sultanil
+/docs/sesi/ @Sultanil
 
 # Pengecualian domain sesi
 /app/Domain/Sesi/ @primahadiramadhan03-ship-it
