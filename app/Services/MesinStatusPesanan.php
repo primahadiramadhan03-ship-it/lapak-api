@@ -43,8 +43,12 @@ final class MesinStatusPesanan
 
         $cap = match ($ke) {
             StatusPesanan::Dibayar => ['dibayar_pada' => now()],
+            StatusPesanan::Dikemas => ['dikemas_pada' => now()],
+            StatusPesanan::Dikirim => ['dikirim_pada' => now()],
+            StatusPesanan::Selesai => ['selesai_pada' => now()],
             StatusPesanan::Dibatalkan => [
                 'dibatalkan_pada' => now(),
+                'dibatalkan_oleh' => $oleh->value,
                 'alasan_batal' => $alasanBatal,
             ],
             default => [],
