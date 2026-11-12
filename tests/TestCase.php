@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Enums\NamaPeran;
 use App\Models\Pengguna;
 use App\Models\Sesi;
 use App\Services\PenerbitSesi;
@@ -45,6 +46,21 @@ abstract class TestCase extends BaseTestCase
     protected function tanpaKunci(): static
     {
         return $this->withoutHeader('Authorization');
+    }
+
+    protected function izinGabungan(NamaPeran ...$peran): array
+    {
+        $nama = [];
+
+        foreach ($peran as $satu) {
+            foreach ($satu->izinBawaan() as $izin) {
+                $nama[$izin->value] = true;
+            }
+        }
+
+        ksort($nama);
+
+        return array_keys($nama);
     }
 
     /**

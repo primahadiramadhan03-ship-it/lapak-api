@@ -12,8 +12,10 @@
 | D3 | Rani (Brili) | `checkout`, `pesanan`, `butir_pesanan` | Sesi 4 |
 | D4 Pembayaran dan Saldo | Dimas (Risa) | `dompet`, `mutasi_saldo` | Sesi 1 |
 | D4 | Dimas (Risa) | `pembayaran` | Sesi 4 |
+| D4 | Dimas (Risa) | `pencairan` | Sesi 5 |
 | D5 Otorisasi, Audit & Kualitas | Sekar (Jaya) | `peran`, `izin`, `pengguna_peran`, `peran_izin` | Sesi 3 |
 | D5 | Sekar (Jaya) | `kunci_idempotensi` | Sesi 4 |
+| D5 | Sekar (Jaya) | `log_audit`, `rantai_audit` | Sesi 5 |
 
 ## Arah Foreign Key
 
@@ -24,6 +26,8 @@ pengguna (D1) <- checkout (D3) <- pesanan (D3) <- butir_pesanan (D3)
 toko (D2) <- pesanan (D3)          produk (D2) <- butir_pesanan (D3)
 checkout (D3) <- pembayaran (D4)
 pengguna (D1) <- kunci_idempotensi (D5)
+pengguna (D1) <- pencairan (D4)
+pengguna (D1) <- log_audit (D5)
 ```
 
 `pesanan` tidak menunjuk ke `pembayaran`, walau itu yang pertama terpikir: D3 tidak boleh menunjuk ke D4. Keduanya menunjuk ke `checkout`, induk bersama milik D3 (LP-7). `pesanan` juga tidak menunjuk ke `alamat`: alamat disalin ke kolom `alamat_kirim` pada saat checkout.
@@ -43,10 +47,16 @@ Berlaku sejak Sesi 4. Transaksi yang mengunci lebih dari satu baris mengambil ku
 | 1 | `pengguna`, lalu `alamat` miliknya | `BukuAlamat` |
 | 2 | `keranjang`, lalu `butir_keranjang` | `LayananCheckout` |
 | 3 | `checkout` | `GembokCheckout` |
-| 4 | `pembayaran` | `LayananPembayaran` |
+| 4 | `pembayaran`, atau `pencairan` | `LayananPembayaran`, `LayananPencairan` |
 | 5 | `pesanan` | `MesinStatusPesanan` |
 | 6 | `produk`, urut nomor menaik | `PenjagaStok` |
 | 7 | `dompet`, urut nomor menaik | `BukuBesar` |
+| 8 | `rantai_audit`, kepala rantai log audit | `PencatatAudit` |
+
+Dua tambahan Sesi 5:
+
+- `pencairan` menempati anak tangga yang sama dengan `pembayaran`. Tidak ada transaksi yang mengunci keduanya; keduanya sama-sama dikunci sebelum `dompet`.
+- Kepala rantai log audit adalah anak tangga TERAKHIR bagi setiap transaksi, apa pun yang dikuncinya sebelum itu, termasuk baris `sesi`, `toko`, dan `pengguna_peran` yang tidak tercantum di atas. `PencatatAudit::catat()` karenanya selalu dipanggil paling akhir. Kepala rantai hanya satu baris untuk seluruh aplikasi: selama sebuah transaksi memegangnya, setiap tindakan lain yang berjejak menunggu.
 
 Middleware `idempoten` mencatat kuncinya sebelum anak tangga pertama. Catatan itu baris baru, dan tidak ada transaksi yang memintanya setelah memegang kunci dari tabel di atas.
 

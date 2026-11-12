@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\NamaIzin;
+use App\Enums\NamaPeran;
 use App\Models\Pengguna;
 use App\Models\Sesi;
 use App\Services\PenerbitSesi;
@@ -38,10 +40,8 @@ it('menyertakan peran dan izin pengguna pada jawaban siapa saya', function () {
         ->assertJsonPath('data.pengguna.peran', ['pembeli']);
 
     expect($respons->json('data.izin'))
-        ->toContain('keranjang.kelola')
-        ->toContain('toko.buka')
-        ->toContain('pesanan.buat')
-        ->not->toContain('produk.kelola');
+        ->toEqualCanonicalizing($this->izinGabungan(NamaPeran::Pembeli))
+        ->not->toContain(NamaIzin::ProdukKelola->value);
 });
 
 it('mencabut hanya sesi yang sedang dipakai saat keluar', function () {

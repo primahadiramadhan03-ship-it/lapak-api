@@ -34,7 +34,10 @@ enum NamaPeran: string
                 NamaIzin::TokoModerasi,
                 NamaIzin::PeranKelola,
             ],
-            self::Keuangan, self::Auditor => [
+            self::Keuangan => [
+                NamaIzin::BukuBesarLihat,
+            ],
+            self::Auditor => [
                 NamaIzin::BukuBesarLihat,
             ],
         };

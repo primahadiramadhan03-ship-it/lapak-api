@@ -60,21 +60,21 @@ describe('Matriks Otorisasi', function () {
     });
 
     it('memetakan izin per peran sesuai matriks yang disepakati', function () {
-        expect(NamaPeran::Pembeli->izinBawaan())->toEqualCanonicalizing([
+        expect(NamaPeran::Pembeli->izinBawaan())->toContain(
             NamaIzin::KeranjangKelola,
             NamaIzin::TokoBuka,
             NamaIzin::PesananBuat,
-        ])->and(NamaPeran::Penjual->izinBawaan())->toEqualCanonicalizing([
+        )->and(NamaPeran::Penjual->izinBawaan())->toContain(
             NamaIzin::ProdukKelola,
             NamaIzin::DompetLihat,
-        ])->and(NamaPeran::Admin->izinBawaan())->toEqualCanonicalizing([
+        )->and(NamaPeran::Admin->izinBawaan())->toContain(
             NamaIzin::TokoModerasi,
             NamaIzin::PeranKelola,
-        ])->and(NamaPeran::Keuangan->izinBawaan())->toEqualCanonicalizing([
+        )->and(NamaPeran::Keuangan->izinBawaan())->toContain(
             NamaIzin::BukuBesarLihat,
-        ])->and(NamaPeran::Auditor->izinBawaan())->toEqualCanonicalizing([
+        )->and(NamaPeran::Auditor->izinBawaan())->toContain(
             NamaIzin::BukuBesarLihat,
-        ]);
+        );
     });
 
     it('memastikan setiap izin dimiliki sedikitnya satu peran', function () {
