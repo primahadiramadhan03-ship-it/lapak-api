@@ -12,9 +12,16 @@ final class DompetSeeder extends Seeder
 {
     public function run(): void
     {
-        // LP-13: Buat 3 dompet sistem (eksternal, escrow, pendapatan)
-        Dompet::buat('eksternal', JenisDompet::Eksternal);
-        Dompet::buat('escrow', JenisDompet::Escrow);
-        Dompet::buat('pendapatan', JenisDompet::Pendapatan);
+        // LP-13: Buat dompet sistem (eksternal, escrow, pendapatan, penahan) secara idempoten
+        foreach ([
+            JenisDompet::Eksternal,
+            JenisDompet::Escrow,
+            JenisDompet::Pendapatan,
+            JenisDompet::Penahan,
+        ] as $jenis) {
+            if (Dompet::query()->where('kode', $jenis->value)->doesntExist()) {
+                Dompet::buat($jenis->value, $jenis);
+            }
+        }
     }
 }

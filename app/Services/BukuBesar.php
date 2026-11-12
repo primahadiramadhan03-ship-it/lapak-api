@@ -10,8 +10,10 @@ use App\Exceptions\SaldoTidakCukup;
 use App\Models\Dompet;
 use App\Models\MutasiSaldo;
 use App\Models\Pengguna;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 final class BukuBesar
 {
@@ -29,7 +31,7 @@ final class BukuBesar
     ): void {
         // LP-1: Jumlah harus positif
         if ($jumlahRupiah <= 0) {
-            throw new \InvalidArgumentException('Jumlah harus positif.');
+            throw new InvalidArgumentException('Jumlah harus positif.');
         }
 
         // LP-13: Gunakan transaksi database untuk atomicity
@@ -116,5 +118,42 @@ final class BukuBesar
     public function cariDompetPenjual(Pengguna $penjual): ?Dompet
     {
         return Dompet::query()->where('kode', 'penjual:'.$penjual->id)->first();
+    }
+
+    /**
+     * Membuat dompet penjual saat pertama kali dibutuhkan secara aman di bawah konkurensi.
+     * Menggunakan savepoint + baca ulang lockForUpdate() agar MySQL REPEATABLE-READ melihat baris baru.
+     */
+    public function dompetPenjualAtauBuat(Pengguna $penjual): Dompet
+    {
+        return $this->ambilAtauBuatTerkunci('penjual:'.$penjual->id, JenisDompet::Penjual, $penjual->id);
+    }
+
+    /**
+     * Mengambil dompet sistem (eksternal/escrow/pendapatan/penahan), atau membuatnya jika belum ada.
+     */
+    public function dompetSistemAtauBuat(JenisDompet $jenis): Dompet
+    {
+        if ($jenis === JenisDompet::Penjual) {
+            throw new InvalidArgumentException('Gunakan dompetPenjualAtauBuat() untuk dompet penjual.');
+        }
+
+        return $this->ambilAtauBuatTerkunci($jenis->value, $jenis);
+    }
+
+    private function ambilAtauBuatTerkunci(string $kode, JenisDompet $jenis, ?int $penggunaId = null): Dompet
+    {
+        $dompet = Dompet::query()->where('kode', $kode)->first();
+        if ($dompet !== null) {
+            return $dompet;
+        }
+
+        try {
+            return DB::transaction(
+                fn (): Dompet => Dompet::buat($kode, $jenis, 0, $penggunaId)
+            );
+        } catch (UniqueConstraintViolationException) {
+            return Dompet::query()->where('kode', $kode)->lockForUpdate()->firstOrFail();
+        }
     }
 }

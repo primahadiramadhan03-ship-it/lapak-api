@@ -46,4 +46,11 @@ class PembayaranFactory extends Factory
             'batas_bayar_pada' => now()->subMinute(),
         ]);
     }
+
+    public function dibatalkan(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => StatusPembayaran::Dibatalkan,
+        ]);
+    }
 }

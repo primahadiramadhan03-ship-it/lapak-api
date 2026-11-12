@@ -3,11 +3,13 @@
 declare(strict_types=1);
 
 use App\Enums\StatusPembayaran;
+use App\Exceptions\GalatDomain;
 use App\Http\Resources\PembayaranResource;
 use App\Models\Checkout;
 use App\Models\Pembayaran;
 use App\Services\GembokCheckout;
 use App\Services\LayananPembayaran;
+use Database\Seeders\DompetSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
@@ -133,4 +135,40 @@ it('pembayaran resource mengembalikan format yang sesuai kontrak', function () {
         ->and($resource)->not->toHaveKey('id')
         ->and($resource)->not->toHaveKey('checkout_id')
         ->and($resource)->not->toHaveKey('id_peristiwa');
+});
+
+it('menandai dibatalkan untuk pembayaran yang masih menunggu di dalam gembok checkout', function () {
+    $checkout = Checkout::factory()->create();
+    $pembayaran = Pembayaran::factory()->for($checkout)->create([
+        'status' => StatusPembayaran::Menunggu,
+        'batas_bayar_pada' => now()->addHours(12),
+    ]);
+
+    $hasil = $this->gembok->dalam($checkout->id, fn () => $this->layanan->tandaiDibatalkan($checkout));
+
+    expect($hasil)->toBeTrue()
+        ->and($pembayaran->refresh()->status)->toBe(StatusPembayaran::Dibatalkan);
+});
+
+it('tidak menandai dibatalkan bila status pembayaran bukan menunggu', function (string $state) {
+    $checkout = Checkout::factory()->create();
+    $pembayaran = Pembayaran::factory()->{$state}()->for($checkout)->create();
+
+    $hasil = $this->gembok->dalam($checkout->id, fn () => $this->layanan->tandaiDibatalkan($checkout));
+
+    expect($hasil)->toBeFalse()
+        ->and($pembayaran->refresh()->status)->not->toBe(StatusPembayaran::Dibatalkan);
+})->with(['lunas', 'kedaluwarsa']);
+
+it('menolak webhook pembayaran masuk bila tagihan sudah dibatalkan dengan 409', function () {
+    $this->seed(DompetSeeder::class);
+
+    $checkout = Checkout::factory()->create(['total_rupiah' => 150_000]);
+    $pembayaran = Pembayaran::factory()->dibatalkan()->for($checkout)->create(['jumlah_rupiah' => 150_000]);
+
+    expect(fn () => $this->layanan->terima($pembayaran->kode, 150_000, 'evt_batal_01'))
+        ->toThrow(GalatDomain::class, 'Tagihan ini sudah dibatalkan.');
+
+    expect($pembayaran->refresh()->status)->toBe(StatusPembayaran::Dibatalkan)
+        ->and($pembayaran->lunas_pada)->toBeNull();
 });
