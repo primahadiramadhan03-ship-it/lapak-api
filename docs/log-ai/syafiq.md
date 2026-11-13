@@ -69,3 +69,18 @@ Tidak ada copy-paste mentah dari AI tanpa penyesuaian; seluruh kode diuji dan di
   - Menjalankan `./vendor/bin/pest` di SQLite (454 pengujian lulus).
   - Menjalankan pengujian fitur di MySQL InnoDB (`DB_CONNECTION=mysql`).
 
+### 2. Penyelarasan Kontrak Modul Sesi 5 atas Masukan Peninjau Kedua
+
+- **Alat:** Antigravity AI (Gemini).
+- **Bagian yang dibantu:**
+  - Penyelarasan privasi `alamat_kirim` (hanya tampil setelah pesanan dibayar) dan penambahan array `tindakan` dari `AturanTransisi::tujuan` pada `PesananTokoResource`.
+  - Normalisasi format objek nilai uang menjadi array integer rupiah dan tampilan via `$this->uang(...)`.
+  - Penyesuaian rute batal (`POST {nomor}/batal`), middleware idempotensi, serta pemindahan `kemas` & `kirim` ke `tanpa_kunci`.
+  - Penambahan form request `DaftarPesananTokoRequest` dan filter status pada kueri `index`.
+  - Penyesuaian payload rincian audit moderasi toko (`slug`).
+- **Cara verifikasi:**
+  - Menjalankan `./vendor/bin/pint --test` (lulus tanpa pelanggaran).
+  - Menjalankan seluruh pengujian `./vendor/bin/pest` di SQLite (454 pengujian lulus).
+  - Menjalankan pengujian fitur di MySQL InnoDB (`DB_CONNECTION=mysql`).
+
+

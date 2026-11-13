@@ -44,7 +44,7 @@ final class ModerasiToko
                 PeristiwaAudit::TokoDisetujui,
                 $admin,
                 "toko:{$toko->id}",
-                ['toko_id' => $toko->id, 'nama_toko' => $toko->nama],
+                ['slug' => $toko->slug],
             );
 
             return $toko;
@@ -67,7 +67,7 @@ final class ModerasiToko
                 PeristiwaAudit::TokoDitangguhkan,
                 $admin,
                 "toko:{$toko->id}",
-                ['toko_id' => $toko->id, 'nama_toko' => $toko->nama, 'alasan' => $alasan],
+                ['slug' => $toko->slug, 'alasan' => $alasan],
             );
 
             return $toko;

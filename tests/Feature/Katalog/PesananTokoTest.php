@@ -55,16 +55,26 @@ it('menjawab 404 pada daftar pesanan bila penjual belum memiliki toko', function
         ->assertNotFound();
 });
 
-it('menampilkan daftar pesanan toko dengan pagination dan urutan terbaru', function () {
+it('menampilkan daftar pesanan toko dengan pagination, urutan terbaru, dan penyaringan status', function () {
     $pesanan1 = PesananUji::dibayar($this->pembeli, $this->produk, 1);
     $pesanan2 = PesananUji::dibayar($this->pembeli, $this->produk, 2);
+    $this->layanan->kemas($pesanan2);
 
+    // Tanpa filter status: memuat keduanya berurutan dari id terbaru
     $this->sebagai($this->penjual)
         ->getJson('/api/v1/toko-saya/pesanan')
         ->assertOk()
         ->assertJsonPath('meta.total', 2)
         ->assertJsonPath('data.0.nomor', $pesanan2->nomor)
         ->assertJsonPath('data.1.nomor', $pesanan1->nomor);
+
+    // Dengan filter status=dikemas: hanya memuat pesanan2
+    $this->sebagai($this->penjual)
+        ->getJson('/api/v1/toko-saya/pesanan?status=dikemas')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.nomor', $pesanan2->nomor)
+        ->assertJsonPath('data.0.status', 'dikemas');
 });
 
 it('mengisolasi pesanan sehingga penjual tidak melihat pesanan toko lain', function () {
@@ -80,7 +90,7 @@ it('mengisolasi pesanan sehingga penjual tidak melihat pesanan toko lain', funct
         ->and($nomorDaftar)->not->toContain($pesananLain->nomor);
 });
 
-it('menyajikan rincian keuangan pesanan toko termasuk komisi dan bagian penjual', function () {
+it('menyajikan rincian keuangan, daftar butir, dan tindakan yang tersedia bagi penjual', function () {
     $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 2);
 
     $respons = $this->sebagai($this->penjual)
@@ -89,12 +99,36 @@ it('menyajikan rincian keuangan pesanan toko termasuk komisi dan bagian penjual'
         ->assertJsonPath('data.0.subtotal', 370_000)
         ->assertJsonPath('data.0.ongkir', 12_000)
         ->assertJsonPath('data.0.total.rupiah', 382_000)
+        ->assertJsonPath('data.0.total.tampilan', 'Rp 382.000')
         ->assertJsonPath('data.0.komisi.rupiah', 18_500)
+        ->assertJsonPath('data.0.komisi.tampilan', 'Rp 18.500')
         ->assertJsonPath('data.0.bagian_penjual.rupiah', 363_500)
+        ->assertJsonPath('data.0.bagian_penjual.tampilan', 'Rp 363.500')
+        ->assertJsonPath('data.0.tindakan', ['dikemas', 'dibatalkan'])
         ->assertJsonCount(1, 'data.0.butir')
         ->assertJsonPath('data.0.butir.0.nama', 'Kain Batik Tulis');
 
     expect($respons->json('data.0.alamat_kirim'))->toEqualCanonicalizing($pesanan->alamat_kirim);
+});
+
+it('menyembunyikan alamat kirim pembeli sebelum pesanan dibayar demi privasi', function () {
+    $pesananBelumBayar = PesananUji::belumDibayar($this->pembeli, $this->produk, 1);
+    $pesananLunas = PesananUji::dibayar($this->pembeli, $this->produk, 1);
+
+    // Pesanan belum dibayar: alamat_kirim null
+    $this->sebagai($this->penjual)
+        ->getJson("/api/v1/toko-saya/pesanan/{$pesananBelumBayar->nomor}")
+        ->assertOk()
+        ->assertJsonPath('data.alamat_kirim', null)
+        ->assertJsonPath('data.tindakan', []);
+
+    // Pesanan sudah dibayar: alamat_kirim tampil
+    $respons = $this->sebagai($this->penjual)
+        ->getJson("/api/v1/toko-saya/pesanan/{$pesananLunas->nomor}")
+        ->assertOk();
+
+    expect($respons->json('data.alamat_kirim'))->toEqualCanonicalizing($pesananLunas->alamat_kirim)
+        ->and($respons->json('data.tindakan'))->toBe(['dikemas', 'dibatalkan']);
 });
 
 it('menolak akses detail pesanan tanpa kunci sesi atau izin yang tepat', function () {
@@ -143,51 +177,34 @@ it('menjawab 404 untuk detail pesanan yang tidak ditemukan', function () {
         ->assertNotFound();
 });
 
-it('menolak pengemasan pesanan tanpa Idempotency-Key (LP-11)', function () {
+it('penjual berhasil mengemas pesanan yang sudah dibayar tanpa idempoten (LP-10)', function () {
     $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 1);
 
     $this->sebagai($this->penjual)
-        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kemas")
-        ->assertStatus(422)
-        ->assertJsonPath('galat.kode', 'LP-11');
-});
-
-it('penjual berhasil mengemas pesanan yang sudah dibayar (LP-10)', function () {
-    $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 1);
-
-    $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KEMAS-001')
         ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kemas")
         ->assertOk()
         ->assertJsonPath('data.status', StatusPesanan::Dikemas->value)
-        ->assertJsonPath('data.nomor', $pesanan->nomor);
+        ->assertJsonPath('data.nomor', $pesanan->nomor)
+        ->assertJsonPath('data.tindakan', ['dikirim', 'dibatalkan']);
 
     expect($pesanan->refresh()->status)->toBe(StatusPesanan::Dikemas)
         ->and($pesanan->dikemas_pada)->not->toBeNull();
 });
 
-it('pengemasan pesanan bersifat idempoten dengan header Idempotency-Key yang sama', function () {
+it('menolak pengemasan ulang pesanan yang sudah dikemas dengan 409 (LP-10)', function () {
     $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 1);
+    $this->layanan->kemas($pesanan);
 
-    $respons1 = $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KEMAS-IDEMPOTEN-1')
+    $this->sebagai($this->penjual)
         ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kemas")
-        ->assertOk();
-
-    $respons2 = $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KEMAS-IDEMPOTEN-1')
-        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kemas")
-        ->assertOk()
-        ->assertHeader('Idempotency-Replayed', 'true');
-
-    expect($respons2->json('data.dikemas_pada'))->toBe($respons1->json('data.dikemas_pada'));
+        ->assertStatus(409)
+        ->assertJsonPath('galat.kode', 'LP-10');
 });
 
 it('menolak pengemasan pesanan yang belum dibayar dengan 409 (LP-10)', function () {
     $pesanan = PesananUji::belumDibayar($this->pembeli, $this->produk, 1);
 
     $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KEMAS-BELUM-BAYAR')
         ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kemas")
         ->assertStatus(409)
         ->assertJsonPath('galat.kode', 'LP-10');
@@ -197,26 +214,15 @@ it('menjawab 404 saat mengemas pesanan milik toko lain', function () {
     $pesananLain = PesananUji::dibayar($this->pembeli, $this->produkLain, 1);
 
     $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KEMAS-TOKO-LAIN')
         ->postJson("/api/v1/toko-saya/pesanan/{$pesananLain->nomor}/kemas")
         ->assertNotFound();
 });
 
-it('menolak pengiriman pesanan tanpa Idempotency-Key atau tanpa nomor resi', function () {
+it('menolak pengiriman pesanan tanpa nomor resi yang sah', function () {
     $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 1);
     $this->layanan->kemas($pesanan);
 
-    // Tanpa Idempotency-Key
     $this->sebagai($this->penjual)
-        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kirim", [
-            'nomor_resi' => 'RESI-12345',
-        ])
-        ->assertStatus(422)
-        ->assertJsonPath('galat.kode', 'LP-11');
-
-    // Tanpa nomor resi
-    $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KIRIM-TANPA-RESI')
         ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kirim", [])
         ->assertStatus(422)
         ->assertJsonPath('galat.kode', 'VALIDASI')
@@ -228,13 +234,13 @@ it('penjual berhasil mengirim pesanan yang sudah dikemas dengan nomor resi (LP-1
     $this->layanan->kemas($pesanan);
 
     $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KIRIM-SUKSES-1')
         ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kirim", [
             'nomor_resi' => 'JNE-REG-987654321',
         ])
         ->assertOk()
         ->assertJsonPath('data.status', StatusPesanan::Dikirim->value)
-        ->assertJsonPath('data.nomor_resi', 'JNE-REG-987654321');
+        ->assertJsonPath('data.nomor_resi', 'JNE-REG-987654321')
+        ->assertJsonPath('data.tindakan', []);
 
     expect($pesanan->refresh())
         ->status->toBe(StatusPesanan::Dikirim)
@@ -242,31 +248,23 @@ it('penjual berhasil mengirim pesanan yang sudah dikemas dengan nomor resi (LP-1
         ->dikirim_pada->not->toBeNull();
 });
 
-it('pengiriman pesanan bersifat idempoten dengan header Idempotency-Key yang sama', function () {
+it('menolak pengiriman ulang pesanan yang sudah dikirim dengan 409 (LP-10)', function () {
     $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 1);
     $this->layanan->kemas($pesanan);
+    $this->layanan->kirim($pesanan, 'JNE-REG-1111');
 
-    $payload = ['nomor_resi' => 'JNE-IDEM-112233'];
-
-    $res1 = $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KIRIM-IDEMPOTEN-1')
-        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kirim", $payload)
-        ->assertOk();
-
-    $res2 = $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KIRIM-IDEMPOTEN-1')
-        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kirim", $payload)
-        ->assertOk()
-        ->assertHeader('Idempotency-Replayed', 'true');
-
-    expect($res2->json('data.dikirim_pada'))->toBe($res1->json('data.dikirim_pada'));
+    $this->sebagai($this->penjual)
+        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kirim", [
+            'nomor_resi' => 'JNE-REG-2222',
+        ])
+        ->assertStatus(409)
+        ->assertJsonPath('galat.kode', 'LP-10');
 });
 
 it('menolak pengiriman pesanan yang belum dikemas dengan 409 (LP-10)', function () {
     $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 1);
 
     $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'KIRIM-BELUM-KEMAS')
         ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/kirim", [
             'nomor_resi' => 'JNE-GAGAL-01',
         ])
@@ -274,27 +272,32 @@ it('menolak pengiriman pesanan yang belum dikemas dengan 409 (LP-10)', function 
         ->assertJsonPath('galat.kode', 'LP-10');
 });
 
-it('penjual membatalkan pesanan sebelum dikirim: mengembalikan stok dan dana escrow (LP-10, LP-18)', function () {
+it('penjual membatalkan pesanan sebelum dikirim dan mendukung idempotensi (LP-10, LP-18)', function () {
     $pesanan = PesananUji::dibayar($this->pembeli, $this->produk, 2);
     $stokAwal = $this->produk->stok;
 
-    $saldoEscrowAwal = (int) DB::table('dompet')->where('kode', 'escrow')->value('saldo_rupiah');
-    $saldoPembeliAwal = (int) DB::table('dompet')->where('kode', "pembeli:{$this->pembeli->id}")->value('saldo_rupiah');
+    $payload = ['alasan' => 'Stok produk rusak saat pemeriksaan gudang.'];
 
     $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'BATAL-SUKSES-1')
-        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/batalkan", [
-            'alasan' => 'Stok produk rusak saat pemeriksaan gudang.',
-        ])
+        ->withHeader('Idempotency-Key', 'BATAL-IDEMP-01')
+        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/batal", $payload)
         ->assertOk()
         ->assertJsonPath('data.status', StatusPesanan::Dibatalkan->value)
         ->assertJsonPath('data.alasan_batal', 'Stok produk rusak saat pemeriksaan gudang.')
-        ->assertJsonPath('data.dibatalkan_oleh', 'penjual');
+        ->assertJsonPath('data.dibatalkan_oleh', 'penjual')
+        ->assertJsonPath('data.tindakan', []);
+
+    // Pemanggilan ulang dengan Idempotency-Key yang sama (replay)
+    $this->sebagai($this->penjual)
+        ->withHeader('Idempotency-Key', 'BATAL-IDEMP-01')
+        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/batal", $payload)
+        ->assertOk()
+        ->assertHeader('Idempotency-Replayed', 'true');
 
     // Stok kembali
     expect($this->produk->refresh()->stok)->toBe($stokAwal + 2);
 
-    // Dana kembali dari escrow
+    // Dana kembali dari escrow ke eksternal
     $saldoEscrowAkhir = (int) DB::table('dompet')->where('kode', 'escrow')->value('saldo_rupiah');
     $saldoEksternalAkhir = (int) DB::table('dompet')->where('kode', 'eksternal')->value('saldo_rupiah');
 
@@ -312,8 +315,7 @@ it('menolak pembatalan pesanan yang sudah dikirim dengan 409 (LP-10)', function 
     $this->layanan->kirim($pesanan, 'RESI-12345');
 
     $this->sebagai($this->penjual)
-        ->withHeader('Idempotency-Key', 'BATAL-SETELAH-KIRIM')
-        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/batalkan", [
+        ->postJson("/api/v1/toko-saya/pesanan/{$pesanan->nomor}/batal", [
             'alasan' => 'Mencoba batalkan pesanan setelah dikirim kurir.',
         ])
         ->assertStatus(409)
@@ -334,8 +336,7 @@ it('mencatat jejak audit saat admin menyetujui atau menangguhkan toko (LP-17)', 
         ->pelaku_id->toBe($admin->id)
         ->sasaran->toBe("toko:{$toko->id}")
         ->rincian->toMatchArray([
-            'toko_id' => $toko->id,
-            'nama_toko' => 'Toko Audit Uji',
+            'slug' => $toko->slug,
         ]);
 
     // Admin menangguhkan toko
@@ -348,8 +349,7 @@ it('mencatat jejak audit saat admin menyetujui atau menangguhkan toko (LP-17)', 
         ->pelaku_id->toBe($admin->id)
         ->sasaran->toBe("toko:{$toko->id}")
         ->rincian->toMatchArray([
-            'toko_id' => $toko->id,
-            'nama_toko' => 'Toko Audit Uji',
+            'slug' => $toko->slug,
             'alasan' => 'Melanggar ketentuan layanan platform.',
         ]);
 });

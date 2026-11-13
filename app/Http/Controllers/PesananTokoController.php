@@ -6,10 +6,12 @@ namespace App\Http\Controllers;
 
 use App\Domain\Pesanan\PelakuPesanan;
 use App\Http\Requests\AlasanBatalRequest;
+use App\Http\Requests\DaftarPesananTokoRequest;
 use App\Http\Resources\PesananTokoResource;
 use App\Models\Pesanan;
 use App\Models\Toko;
 use App\Services\LayananPesanan;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,11 +20,15 @@ final class PesananTokoController extends Controller
     /**
      * GET /api/v1/toko-saya/pesanan: daftar pesanan toko milik penjual yang sedang masuk.
      */
-    public function index(Request $request): JsonResponse
+    public function index(DaftarPesananTokoRequest $request): JsonResponse
     {
         $toko = Toko::query()->milik($request->user())->firstOrFail();
         $halaman = Pesanan::query()
             ->where('toko_id', $toko->id)
+            ->when(
+                $request->validated('status'),
+                fn (Builder $kueri, string $status) => $kueri->where('status', $status),
+            )
             ->with('butir')
             ->orderByDesc('id')
             ->paginate(config('lapak.katalog.per_halaman_bawaan'), ['*'], 'halaman');
@@ -67,9 +73,9 @@ final class PesananTokoController extends Controller
     }
 
     /**
-     * POST /api/v1/toko-saya/pesanan/{nomor}/batalkan: penjual membatalkan pesanan sebelum dikirim.
+     * POST /api/v1/toko-saya/pesanan/{nomor}/batal: penjual membatalkan pesanan sebelum dikirim.
      */
-    public function batalkan(AlasanBatalRequest $request, LayananPesanan $layanan, string $nomor): JsonResponse
+    public function batal(AlasanBatalRequest $request, LayananPesanan $layanan, string $nomor): JsonResponse
     {
         $pesanan = $this->milikToko($request, $nomor);
         $hasil = $layanan->batalkan($pesanan, PelakuPesanan::Penjual, $request->user(), $request->alasan());

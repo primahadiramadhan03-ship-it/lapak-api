@@ -18,7 +18,7 @@ return [
     'GET /api/v1/toko-saya/pesanan/{nomor}' => ['penjual'],
     'POST /api/v1/toko-saya/pesanan/{nomor}/kemas' => ['penjual'],
     'POST /api/v1/toko-saya/pesanan/{nomor}/kirim' => ['penjual'],
-    'POST /api/v1/toko-saya/pesanan/{nomor}/batalkan' => ['penjual'],
+    'POST /api/v1/toko-saya/pesanan/{nomor}/batal' => ['penjual'],
 
     'GET /api/v1/admin/toko' => ['admin'],
     'POST /api/v1/admin/toko/{id}/setujui' => ['admin'],
