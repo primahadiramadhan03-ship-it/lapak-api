@@ -92,10 +92,14 @@ it('mencatat pemakaian paling sering satu kali per menit', function () {
     expect($this->sesi->refresh()->terakhir_dipakai_pada->gt($awal))->toBeTrue();
 });
 
-it('mematikan kunci lama saat dirotasi tanpa mengganti sesinya', function () {
+it('mematikan kunci lama saat dirotasi tanpa mengganti sesinya dan mencabut sesi jika kunci lama dipakai lagi', function () {
     $kunciBaru = $this->penerbit->rotasi($this->sesi);
 
-    expect($this->pemeriksa->periksa($this->kunci))->toBeNull()
-        ->and($this->pemeriksa->periksa($kunciBaru)?->pengenal)->toBe($this->sesi->pengenal)
+    // Kunci baru dapat digunakan
+    expect($this->pemeriksa->periksa($kunciBaru)?->pengenal)->toBe($this->sesi->pengenal)
+        // Kunci lama ditolak dan langsung mencabut sesi
+        ->and($this->pemeriksa->periksa($this->kunci))->toBeNull()
+        // Kunci baru pun sekarang ikut mati karena sesi telah dicabut
+        ->and($this->pemeriksa->periksa($kunciBaru))->toBeNull()
         ->and(Sesi::count())->toBe(1);
 });

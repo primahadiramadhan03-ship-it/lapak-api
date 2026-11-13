@@ -110,8 +110,8 @@ it('menyegarkan sesi dan mengganti kuncinya setelah kata sandi dikonfirmasi', fu
     expect($kunciBaru)->not->toBe($kunciLama)
         ->and(Sesi::count())->toBe(1);
 
-    $this->denganKunci($kunciLama)->getJson('/api/v1/saya')->assertUnauthorized();
     $this->denganKunci($kunciBaru)->getJson('/api/v1/saya')->assertOk();
+    $this->denganKunci($kunciLama)->getJson('/api/v1/saya')->assertUnauthorized();
 });
 
 it('menolak konfirmasi dengan kata sandi salah dan membiarkan sesi tetap tidak segar', function () {
