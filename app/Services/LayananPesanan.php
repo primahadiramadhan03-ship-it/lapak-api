@@ -67,14 +67,17 @@ final class LayananPesanan
             $pesanan, $oleh, $pelaku,
         ) {
             $terkini = $this->mesin->pindahkan($pesanan, StatusPesanan::Selesai, $oleh);
-            $this->dana->lepaskan($terkini);
+
+            $peristiwa = $oleh === PelakuPesanan::Pembeli
+                ? PeristiwaAudit::PesananDiterima
+                : PeristiwaAudit::PesananSelesaiOtomatis;
 
             $sasaran = "pesanan:{$terkini->nomor}";
-            $this->audit->catat(PeristiwaAudit::DanaDilepas, $pelaku, $sasaran, [
+            $this->audit->catat($peristiwa, $pelaku, $sasaran, [
                 'oleh' => $oleh->value,
-                'bagian_penjual_rupiah' => $this->dana->bagianPenjual($terkini)->rupiah,
-                'komisi_rupiah' => $this->dana->komisi($terkini)->rupiah,
             ]);
+
+            $this->dana->lepaskan($terkini, $pelaku);
 
             return $terkini;
         });
@@ -106,15 +109,15 @@ final class LayananPesanan
             $terkini = $this->mesin->pindahkan($pesanan, StatusPesanan::Dibatalkan, $oleh, $alasan);
             $terkini->load('butir');
             $this->kembalikanStok(collect([$terkini]));
-            $this->dana->kembalikan($terkini);
 
             $sasaran = "pesanan:{$terkini->nomor}";
             $this->audit->catat(PeristiwaAudit::PesananDibatalkan, $pelaku, $sasaran, [
-                'oleh' => $oleh->value, 'dari_status' => $asal->value, 'alasan' => $alasan,
+                'oleh' => $oleh->value,
+                'dari_status' => $asal->value,
+                'alasan' => $alasan,
             ]);
-            $this->audit->catat(PeristiwaAudit::DanaDikembalikan, $pelaku, $sasaran, [
-                'jumlah_rupiah' => $terkini->total_rupiah,
-            ]);
+
+            $this->dana->kembalikan($terkini, $pelaku);
 
             return $terkini;
         });

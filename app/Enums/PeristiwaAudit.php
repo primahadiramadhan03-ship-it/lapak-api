@@ -19,6 +19,8 @@ enum PeristiwaAudit: string
 
     case CheckoutDibatalkan = 'checkout.dibatalkan';
     case PesananDibatalkan = 'pesanan.dibatalkan';
+    case PesananDiterima = 'pesanan.diterima';
+    case PesananSelesaiOtomatis = 'pesanan.selesai_otomatis';
 
     case PembayaranLunas = 'pembayaran.lunas';
     case PembayaranDikembalikan = 'pembayaran.dikembalikan';
