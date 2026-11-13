@@ -31,3 +31,28 @@
   - Menjalankan `./vendor/bin/pest` dan `./vendor/bin/pint --test` secara mandiri di terminal pada setiap tahap integrasi cabang hingga mencapai 266 kasus uji lulus.
   - Memeriksa langsung *git diff* dan menyelesaikan konflik penggabungan cabang secara manual di terminal untuk menjaga keutuhan kode antar-domain.
   - Menguji idempotensi `PeranIzinSeeder` dan memverifikasi perilaku *cache invalidation* pada `PengelolaPeran::cabut` agar izin pengguna terputus secara konsisten.
+
+## Sesi 4
+**Bagian yang dibantu**:
+  - Merancang skenario balapan `batal-saat-checkout` dan menganalisis kebuntuan (*deadlock*) akibat perbedaan urutan penguncian baris antara proses checkout dan pembatalan pesanan.
+  - Memperbaiki pengurutan pengembalian stok pada `LayananPesanan::kembalikanStok()` agar selalu urut nomor produk menaik (menghindari MySQL error 1213 deadlock).
+  - Menyusun rincian transisi status pesanan dan penanganan idempotensi checkout.
+
+**Cara memverifikasi hasil**:
+  - Menjalankan skenario balapan `php artisan lapak:balapan batal-saat-checkout` pada basis data MySQL InnoDB (12/12 proses lulus tanpa deadlock).
+  - Menjalankan `./vendor/bin/pest` pada SQLite dan MySQL untuk memverifikasi seluruh skenario checkout.
+  - Memverifikasi format kode dengan `./vendor/bin/pint --test`.
+
+## Sesi 5 — A3: Kontrak Layanan Pesanan, Cap Waktu Proses, dan Pendukung Uji
+**Bagian yang dibantu**:
+  - Merancang migrasi `2026_10_05_300001_tambah_proses_pada_pesanan.php` untuk menambahkan kolom cap waktu proses (`dikemas_pada`, `dikirim_pada`, `nomor_resi`, `selesai_pada`, `dibatalkan_oleh`) pada tabel pesanan.
+  - Mengimplementasikan `LayananPesanan` sebagai pintu tunggal setelah checkout (LP-10, LP-12) yang mengoordinasikan `GembokCheckout`, `MesinStatusPesanan`, `PenjagaStok`, `LayananDana`, dan `PencatatAudit`.
+  - Menyelaraskan kontrak audit trail: mencatat `pesanan.diterima` dan `pesanan.selesai_otomatis` serta `pesanan.dibatalkan` di `LayananPesanan`, sementara `dana.dilepas` dan `dana.dikembalikan` dicatat di `LayananDana`.
+  - Memutakhirkan `PelepasanSerentak` agar menggunakan pintu tunggal `LayananPesanan::terima()`.
+  - Menambahkan *test helper* `PesananUji::dibayar()` dan melengkapi cakupan kasus uji pada `LayananPesananTest`.
+
+**Cara memverifikasi hasil**:
+  - Menjalankan `./vendor/bin/pint --test` (seluruh berkas lulus format).
+  - Menjalankan `./vendor/bin/pest` di SQLite dan MySQL untuk memastikan seluruh uji hijau.
+  - Menjalankan `php artisan lapak:balapan pelepasan-serentak` dan `php artisan lapak:balapan batal-saat-checkout` di MySQL InnoDB.
+  - Memverifikasi keutuhan buku besar dengan `php artisan lapak:periksa-buku`.

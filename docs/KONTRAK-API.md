@@ -303,10 +303,11 @@ Setelah checkout, sebuah pesanan bergerak melalui `App\Services\LayananPesanan` 
 4. **Dikirim**:
    - Penjual memasukkan nomor resi ekspedisi via `kirim(Pesanan $pesanan, string $nomorResi)`, status berpindah ke `dikirim`, mengisi `dikirim_pada` dan `nomor_resi`.
 5. **Selesai**:
-   - Pembeli mengonfirmasi pesanan telah sampai via `terima(Pesanan $pesanan, PelakuPesanan $oleh, ?Pengguna $pelaku)`, status berpindah ke `selesai`, mengisi `selesai_pada`.
-   - Pelepasan dana terjadi atomik di dalam satu transaksi: komisi dipotong ke dompet `pendapatan`, sisa hasil penjualan masuk ke dompet `penjual`, dan peristiwa audit `dana.dilepas` dicatat.
+   - Pembeli mengonfirmasi pesanan telah sampai via `terima(Pesanan $pesanan, PelakuPesanan::Pembeli, $pembeli)`, status berpindah ke `selesai`, mengisi `selesai_pada`. Peristiwa audit `pesanan.diterima` dicatat oleh `LayananPesanan`.
+   - Atau sistem menyelesaikan secara otomatis via `terima(Pesanan $pesanan, PelakuPesanan::Sistem)` setelah masa tahan lewat (LP-12). Peristiwa audit `pesanan.selesai_otomatis` dicatat oleh `LayananPesanan`.
+   - Pelepasan dana terjadi atomik di dalam transaksi yang sama lewat `LayananDana::lepaskan()`: komisi dipotong ke dompet `pendapatan`, sisa hasil penjualan masuk ke dompet `penjual`, dan peristiwa audit `dana.dilepas` dicatat oleh `LayananDana`.
 6. **Dibatalkan**:
    - Pesanan berbayar (status `dibayar` atau `dikemas`) dapat dibatalkan oleh pembeli maupun penjual via `batalkan(Pesanan $pesanan, PelakuPesanan $oleh, ?Pengguna $pelaku, string $alasan)`.
    - Stok dikembalikan dengan pengurutan ID produk menaik (menghindari deadlock 1213).
-   - Seluruh dana pesanan dikembalikan utuh dari dompet `escrow` ke `eksternal`.
-   - Peristiwa audit `pesanan.dibatalkan` dan `dana.dikembalikan` dicatat.
+   - Seluruh dana pesanan dikembalikan utuh dari dompet `escrow` ke `eksternal` via `LayananDana::kembalikan()`.
+   - Peristiwa audit `pesanan.dibatalkan` dicatat oleh `LayananPesanan`, dan `dana.dikembalikan` dicatat oleh `LayananDana`.
