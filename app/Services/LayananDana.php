@@ -8,6 +8,7 @@ use App\Domain\Pesanan\StatusPesanan;
 use App\Domain\Uang;
 use App\Enums\JenisDompet;
 use App\Enums\JenisMutasi;
+use App\Enums\PeristiwaAudit;
 use App\Models\Dompet;
 use App\Models\MutasiSaldo;
 use App\Models\Pengguna;
@@ -22,7 +23,10 @@ use LogicException;
  */
 final class LayananDana
 {
-    public function __construct(private readonly BukuBesar $buku) {}
+    public function __construct(
+        private readonly BukuBesar $buku,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     /** LP-8: komisi dihitung dari subtotal produk, dengan pembulatan setengah ke atas milik Uang::persen(). */
     public function komisi(Pesanan $pesanan): Uang
@@ -37,7 +41,7 @@ final class LayananDana
     }
 
     /** LP-12: pesanan selesai, dana keluar dari escrow menjadi saldo penjual dan komisi. */
-    public function lepaskan(Pesanan $pesanan): void
+    public function lepaskan(Pesanan $pesanan, ?Pengguna $pelaku = null): void
     {
         $this->pastikanDalamTransaksi();
 
@@ -94,10 +98,21 @@ final class LayananDana
                 "Pelepasan dana pesanan {$rujukan}",
             );
         }
+
+        $sasaran = "pesanan:{$terkini->nomor}";
+        $this->audit->catat(
+            PeristiwaAudit::DanaDilepas,
+            $pelaku,
+            $sasaran,
+            [
+                'bagian_penjual_rupiah' => $bagianPenjual->rupiah,
+                'komisi_rupiah' => $komisi->rupiah,
+            ],
+        );
     }
 
     /** Pesanan yang sudah dibayar dan berstatus dibatalkan: seluruh nilainya kembali kepada pembeli. */
-    public function kembalikan(Pesanan $pesanan): void
+    public function kembalikan(Pesanan $pesanan, ?Pengguna $pelaku = null): void
     {
         $this->pastikanDalamTransaksi();
 
@@ -125,6 +140,16 @@ final class LayananDana
                 "Pengembalian dana pesanan {$rujukan}",
             );
         }
+
+        $sasaran = "pesanan:{$terkini->nomor}";
+        $this->audit->catat(
+            PeristiwaAudit::DanaDikembalikan,
+            $pelaku,
+            $sasaran,
+            [
+                'jumlah_rupiah' => $terkini->total_rupiah,
+            ],
+        );
     }
 
     private function pastikanDalamTransaksi(): void

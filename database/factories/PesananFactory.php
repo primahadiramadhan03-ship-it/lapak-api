@@ -39,4 +39,23 @@ class PesananFactory extends Factory
     {
         return $this->state(['status' => StatusPesanan::Dibayar, 'dibayar_pada' => now()]);
     }
+
+    public function dikemas(): static
+    {
+        return $this->dibayar()->state(['status' => StatusPesanan::Dikemas, 'dikemas_pada' => now()]);
+    }
+
+    public function dikirim(string $nomorResi = 'JNE-00012345'): static
+    {
+        return $this->dikemas()->state([
+            'status' => StatusPesanan::Dikirim,
+            'dikirim_pada' => now(),
+            'nomor_resi' => $nomorResi,
+        ]);
+    }
+
+    public function selesai(): static
+    {
+        return $this->dikirim()->state(['status' => StatusPesanan::Selesai, 'selesai_pada' => now()]);
+    }
 }

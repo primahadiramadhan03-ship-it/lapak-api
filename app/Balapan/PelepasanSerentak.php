@@ -15,9 +15,7 @@ use App\Models\Pengguna;
 use App\Models\Pesanan;
 use App\Models\Toko;
 use App\Services\BukuBesar;
-use App\Services\GembokCheckout;
-use App\Services\LayananDana;
-use App\Services\MesinStatusPesanan;
+use App\Services\LayananPesanan;
 use Database\Seeders\DompetSeeder;
 
 /**
@@ -103,14 +101,11 @@ final class PelepasanSerentak extends SkenarioBalapan
     public function jalankan(int $indeks, array $konteks): mixed
     {
         $pasang = $konteks['pasangan'][$indeks - 1];
+        $pesanan = Pesanan::query()->findOrFail($pasang['pesanan_id']);
 
-        return app(GembokCheckout::class)->dalam($pasang['checkout_id'], function () use ($pasang): string {
-            $pesanan = Pesanan::query()->lockForUpdate()->findOrFail($pasang['pesanan_id']);
-            app(MesinStatusPesanan::class)->pindahkan($pesanan, StatusPesanan::Selesai, PelakuPesanan::Pembeli);
-            app(LayananDana::class)->lepaskan($pesanan);
+        app(LayananPesanan::class)->terima($pesanan, PelakuPesanan::Pembeli);
 
-            return 'dilepas';
-        });
+        return 'dilepas';
     }
 
     public function evaluasi(array $hasil, array $konteks): array
