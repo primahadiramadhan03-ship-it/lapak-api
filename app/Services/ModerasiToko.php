@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\NamaPeran;
+use App\Enums\PeristiwaAudit;
 use App\Enums\StatusToko;
 use App\Exceptions\TransisiTokoTidakSah;
 use App\Models\Pengguna;
@@ -20,7 +21,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class ModerasiToko
 {
-    public function __construct(private readonly PengelolaPeran $peran) {}
+    public function __construct(
+        private readonly PengelolaPeran $peran,
+        private readonly PencatatAudit $audit,
+    ) {}
 
     public function setujui(Toko $toko, Pengguna $admin): Toko
     {
@@ -33,7 +37,17 @@ final class ModerasiToko
             // dan sesinya tidak diganggu. Pemilik toko baru kehilangan sesinya dan masuk ulang.
             $this->peran->beri($toko->pemilik()->firstOrFail(), NamaPeran::Penjual, $admin);
 
-            return $toko->refresh();
+            $toko->refresh();
+
+            // Jejak moderasi: catat di akhir transaksi (LP-17)
+            $this->audit->catat(
+                PeristiwaAudit::TokoDisetujui,
+                $admin,
+                "toko:{$toko->id}",
+                ['toko_id' => $toko->id, 'nama_toko' => $toko->nama],
+            );
+
+            return $toko;
         });
     }
 
@@ -43,9 +57,21 @@ final class ModerasiToko
      */
     public function tangguhkan(Toko $toko, Pengguna $admin, string $alasan): Toko
     {
-        $this->pindahkan($toko, [StatusToko::Aktif], StatusToko::Ditangguhkan, $admin, $alasan);
+        return DB::transaction(function () use ($toko, $admin, $alasan): Toko {
+            $this->pindahkan($toko, [StatusToko::Aktif], StatusToko::Ditangguhkan, $admin, $alasan);
 
-        return $toko->refresh();
+            $toko->refresh();
+
+            // Jejak moderasi: catat di akhir transaksi (LP-17)
+            $this->audit->catat(
+                PeristiwaAudit::TokoDitangguhkan,
+                $admin,
+                "toko:{$toko->id}",
+                ['toko_id' => $toko->id, 'nama_toko' => $toko->nama, 'alasan' => $alasan],
+            );
+
+            return $toko;
+        });
     }
 
     /**
