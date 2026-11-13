@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\PeristiwaAudit;
 use App\Exceptions\KredensialSalah;
 use App\Http\Requests\KonfirmasiSandiRequest;
 use App\Http\Resources\PenggunaResource;
@@ -11,13 +12,15 @@ use App\Http\Resources\SesiResource;
 use App\Models\Sesi;
 use App\Services\PemeriksaIzin;
 use App\Services\PemeriksaKataSandi;
+use App\Services\PencatatAudit;
 use App\Services\PenerbitSesi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class SesiController extends Controller
 {
-    public function __construct(private readonly PenerbitSesi $penerbit) {}
+    public function __construct(private readonly PenerbitSesi $penerbit,
+        private readonly PencatatAudit $audit, ) {}
 
     /**
      * GET /saya: siapa saya, apa yang boleh saya lakukan,
@@ -52,7 +55,14 @@ final class SesiController extends Controller
     /** POST /keluar: mencabut sesi yang sedang dipakai. Perangkat lain tidak terpengaruh. */
     public function keluar(Request $request): JsonResponse
     {
-        $this->penerbit->cabut(Sesi::dariPermintaan($request));
+        $sesi = Sesi::dariPermintaan($request);
+        $this->penerbit->cabut($sesi);
+        $this->audit->catat(
+            PeristiwaAudit::SesiDicabut,
+            $request->user(),
+            "sesi:{$sesi->pengenal}",
+            ['pengenal' => $sesi->pengenal],
+        );
 
         return $this->sukses();
     }
@@ -92,6 +102,13 @@ final class SesiController extends Controller
             ->firstOrFail();
 
         $this->penerbit->cabut($sesi);
+
+        $this->audit->catat(
+            PeristiwaAudit::SesiDicabut,
+            $request->user(),
+            "sesi:{$sesi->pengenal}",
+            ['pengenal' => $sesi->pengenal],
+        );
 
         return $this->sukses();
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\NamaPeran;
+use App\Enums\PeristiwaAudit;
 use App\Models\Pengguna;
 use App\Models\Peran;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -15,11 +16,9 @@ final class PengelolaPeran
     public function __construct(
         private readonly PemeriksaIzin $izin,
         private readonly PenerbitSesi $sesi,
+        private readonly PencatatAudit $audit,
     ) {}
 
-    /**
-     * @return bool false bila pengguna sudah memegang peran tersebut.
-     */
     public function beri(
         Pengguna $pengguna,
         NamaPeran $peran,
@@ -41,19 +40,33 @@ final class PengelolaPeran
 
         $this->setelahBerubah($pengguna);
 
+        $this->audit->catat(
+            PeristiwaAudit::PeranDiberikan,
+            $oleh,
+            "pengguna:{$pengguna->id}",
+            ['peran' => $peran->value],
+        );
+
         return true;
     }
 
-    /**
-     * @return bool false bila pengguna tidak memegang peran tersebut.
-     */
-    public function cabut(Pengguna $pengguna, NamaPeran $peran): bool
-    {
+    public function cabut(
+        Pengguna $pengguna,
+        NamaPeran $peran,
+        ?Pengguna $oleh = null
+    ): bool {
         if ($pengguna->peran()->detach($this->idPeran($peran)) === 0) {
             return false;
         }
 
         $this->setelahBerubah($pengguna);
+
+        $this->audit->catat(
+            PeristiwaAudit::PeranDicabut,
+            $oleh,
+            "pengguna:{$pengguna->id}",
+            ['peran' => $peran->value],
+        );
 
         return true;
     }

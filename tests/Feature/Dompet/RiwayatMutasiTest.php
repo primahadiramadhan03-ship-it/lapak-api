@@ -160,16 +160,16 @@ it('menolak kunci sesi lama setelah rotasi dan menerima kunci baru', function ()
     // Lakukan rotasi pada sesi yang sama.
     $kunciBaru = $penerbit->rotasi($sesi);
 
-    // Kunci lama harus ditolak.
-    $this->withHeader('Authorization', 'Bearer '.$kunciLama)
-        ->getJson('/api/v1/dompet/mutasi')
-        ->assertUnauthorized();
-
     // Kunci baru harus diterima.
     $this->withHeader('Authorization', 'Bearer '.$kunciBaru)
         ->getJson('/api/v1/dompet/mutasi')
         ->assertOk()
         ->assertJsonCount(1, 'data');
+
+    // Kunci lama harus ditolak (dan mencabut sesi).
+    $this->withHeader('Authorization', 'Bearer '.$kunciLama)
+        ->getJson('/api/v1/dompet/mutasi')
+        ->assertUnauthorized();
 });
 
 it('transaksi seeder idempoten: menjalankan dua kali tetap 6 mutasi dan buku besar seimbang', function () {
