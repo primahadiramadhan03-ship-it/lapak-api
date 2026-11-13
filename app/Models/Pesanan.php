@@ -82,4 +82,14 @@ final class Pesanan extends Model
     {
         $kueri->where('pesanan.pembeli_id', $pembeli->id);
     }
+
+    /**
+     * Pintu penjual selalu berangkat dari scope ini. Hanya pesanan tokonya sendiri yang dapat dilihat.
+     *
+     * @param  Builder<Pesanan>  $kueri
+     */
+    public function scopeMilikPenjual(Builder $kueri, Pengguna $penjual): void
+    {
+        $kueri->whereIn('pesanan.toko_id', Toko::query()->milik($penjual)->select('id'));
+    }
 }

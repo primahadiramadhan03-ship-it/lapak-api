@@ -51,6 +51,7 @@ describe('Matriks Otorisasi', function () {
                 'keranjang.kelola',
                 'toko.buka',
                 'pesanan.buat',
+                'pesanan.proses',
                 'produk.kelola',
                 'dompet.lihat',
                 'toko.moderasi',
@@ -66,6 +67,7 @@ describe('Matriks Otorisasi', function () {
             NamaIzin::PesananBuat,
         )->and(NamaPeran::Penjual->izinBawaan())->toContain(
             NamaIzin::ProdukKelola,
+            NamaIzin::PesananProses,
             NamaIzin::DompetLihat,
         )->and(NamaPeran::Admin->izinBawaan())->toContain(
             NamaIzin::TokoModerasi,

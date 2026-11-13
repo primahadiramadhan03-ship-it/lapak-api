@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\ModerasiTokoController;
+use App\Http\Controllers\PesananTokoController;
 use App\Http\Controllers\ProdukSayaController;
 use App\Http\Controllers\TokoSayaController;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,20 @@ Route::middleware('auth:sesi')
                 ->middleware('idempoten:wajib')
                 ->name('produk.stok');
         });
+
+        // Pesanan toko: penjual memproses pesanan miliknya (kemas, kirim, batal).
+        Route::middleware('izin:pesanan.proses')
+            ->prefix('pesanan')
+            ->name('pesanan.')
+            ->group(function (): void {
+                Route::get('/', [PesananTokoController::class, 'index'])->name('index');
+                Route::get('{nomor}', [PesananTokoController::class, 'show'])->name('show');
+                Route::post('{nomor}/kemas', [PesananTokoController::class, 'kemas'])->name('kemas');
+                Route::post('{nomor}/kirim', [PesananTokoController::class, 'kirim'])->name('kirim');
+                Route::post('{nomor}/batal', [PesananTokoController::class, 'batal'])
+                    ->middleware('idempoten')
+                    ->name('batal');
+            });
     });
 
 // Pintu admin atas toko.

@@ -48,3 +48,39 @@ Tidak ada copy-paste mentah dari AI tanpa penyesuaian; seluruh kode diuji dan di
 
 - Antigravity AI Assistant
 - Laravel 12 + Pest 3 + Laravel Pint
+
+---
+
+## Sesi 5 (Escrow, Saldo, Audit, dan Rilis v1.0.0)
+
+### 1. Implementasi B2 — Pintu Penjual atas Pesanan dan Jejak Moderasi
+
+- **Alat:** Antigravity AI (Gemini).
+- **Bagian yang dibantu:**
+  - Penambahan izin `pesanan.proses` pada `NamaIzin` dan pemberian ke peran `Penjual` di `NamaPeran`.
+  - Pendaftaran 5 rute pesanan toko di bawah `prefix('pesanan')` dengan middleware `izin:pesanan.proses` pada `routes/api/katalog.php`.
+  - Implementasi `PesananTokoController` menggunakan pintu tunggal `LayananPesanan` (`kemas`, `kirim`, `batalkan`).
+  - Implementasi `PesananTokoResource` yang menyajikan rincian `komisi`, `bagian_penjual`, `total`, serta `alamat_kirim`.
+  - Pencatatan jejak audit keputusan moderasi toko (`PeristiwaAudit::TokoDisetujui`, `PeristiwaAudit::TokoDitangguhkan`) pada `ModerasiToko`.
+  - Penyesuaian matriks otorisasi (`matriks/katalog.php`) dan konfigurasi idempotensi (`idempoten/katalog.php`).
+  - Penulisan 23 kasus uji komprehensif pada `tests/Feature/Katalog/PesananTokoTest.php`.
+- **Cara verifikasi:**
+  - Menjalankan `./vendor/bin/pint --test` (lulus tanpa pelanggaran).
+  - Menjalankan `./vendor/bin/pest` di SQLite (454 pengujian lulus).
+  - Menjalankan pengujian fitur di MySQL InnoDB (`DB_CONNECTION=mysql`).
+
+### 2. Penyelarasan Kontrak Modul Sesi 5 atas Masukan Peninjau Kedua
+
+- **Alat:** Antigravity AI (Gemini).
+- **Bagian yang dibantu:**
+  - Penyelarasan privasi `alamat_kirim` (hanya tampil setelah pesanan dibayar) dan penambahan array `tindakan` dari `AturanTransisi::tujuan` pada `PesananTokoResource`.
+  - Normalisasi format objek nilai uang menjadi array integer rupiah dan tampilan via `$this->uang(...)`.
+  - Penyesuaian rute batal (`POST {nomor}/batal`), middleware idempotensi, serta pemindahan `kemas` & `kirim` ke `tanpa_kunci`.
+  - Penambahan form request `DaftarPesananTokoRequest` dan filter status pada kueri `index`.
+  - Penyesuaian payload rincian audit moderasi toko (`slug`).
+- **Cara verifikasi:**
+  - Menjalankan `./vendor/bin/pint --test` (lulus tanpa pelanggaran).
+  - Menjalankan seluruh pengujian `./vendor/bin/pest` di SQLite (454 pengujian lulus).
+  - Menjalankan pengujian fitur di MySQL InnoDB (`DB_CONNECTION=mysql`).
+
+
