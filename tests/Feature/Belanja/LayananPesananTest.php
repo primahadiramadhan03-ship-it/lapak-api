@@ -138,7 +138,7 @@ it('membatalkan pesanan yang sudah dibayar: stok kembali, dana kembali, dua jeja
         ->and($this->kain->refresh()->stok)->toBe(5)
         ->and(($this->saldo)('escrow'))->toBe(0)
         ->and(($this->saldo)('eksternal'))->toBe(0)
-        ->and(($this->peristiwa)())->toBe(['pesanan.dibatalkan', 'dana.dikembalikan']);
+        ->and(($this->peristiwa)())->toBe(['dana.dikembalikan', 'pesanan.dibatalkan']);
 
     $this->artisan('lapak:periksa-buku')->assertSuccessful();
 })->with([PelakuPesanan::Pembeli, PelakuPesanan::Penjual]);

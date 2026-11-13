@@ -68,6 +68,9 @@ final class LayananPesanan
         ) {
             $terkini = $this->mesin->pindahkan($pesanan, StatusPesanan::Selesai, $oleh);
 
+            // Urutan kunci PETA-SKEMA.md: dompet (anak tangga 7) sebelum rantai_audit (anak tangga 8)
+            $this->dana->lepaskan($terkini, $pelaku);
+
             $peristiwa = $oleh === PelakuPesanan::Pembeli
                 ? PeristiwaAudit::PesananDiterima
                 : PeristiwaAudit::PesananSelesaiOtomatis;
@@ -76,8 +79,6 @@ final class LayananPesanan
             $this->audit->catat($peristiwa, $pelaku, $sasaran, [
                 'oleh' => $oleh->value,
             ]);
-
-            $this->dana->lepaskan($terkini, $pelaku);
 
             return $terkini;
         });
@@ -110,14 +111,15 @@ final class LayananPesanan
             $terkini->load('butir');
             $this->kembalikanStok(collect([$terkini]));
 
+            // Urutan kunci PETA-SKEMA.md: dompet (anak tangga 7) sebelum rantai_audit (anak tangga 8)
+            $this->dana->kembalikan($terkini, $pelaku);
+
             $sasaran = "pesanan:{$terkini->nomor}";
             $this->audit->catat(PeristiwaAudit::PesananDibatalkan, $pelaku, $sasaran, [
                 'oleh' => $oleh->value,
                 'dari_status' => $asal->value,
                 'alasan' => $alasan,
             ]);
-
-            $this->dana->kembalikan($terkini, $pelaku);
 
             return $terkini;
         });
