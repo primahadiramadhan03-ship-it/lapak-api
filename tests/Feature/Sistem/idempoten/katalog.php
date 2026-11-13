@@ -5,6 +5,9 @@ declare(strict_types=1);
 return [
     'berkunci' => [
         'POST api/v1/toko-saya/produk/{id}/stok',
+        'POST api/v1/toko-saya/pesanan/{nomor}/kemas',
+        'POST api/v1/toko-saya/pesanan/{nomor}/kirim',
+        'POST api/v1/toko-saya/pesanan/{nomor}/batalkan',
     ],
     'tanpa_kunci' => [
         'POST api/v1/toko-saya' => 'Satu pengguna satu toko (LP-3): pengulangan dijawab 409.',
