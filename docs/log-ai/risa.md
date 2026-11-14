@@ -117,3 +117,22 @@
   - Menjalankan `./vendor/bin/pint --test` (275 berkas lulus format).
   - Menjalankan `./vendor/bin/pest` di SQLite dan MySQL 8 InnoDB (416 passed, 1.729 assertions).
   - Menjalankan `php artisan lapak:balapan pelepasan-serentak` di MySQL 8 InnoDB (4/4 proses serentak lulus tanpa deadlock/duplikat) dilanjutkan `php artisan lapak:periksa-buku` (0 pelanggaran).
+
+## Sesi 5 — B4: Pencairan Saldo, Invarian Keenam, dan Skenario Balapan
+
+- **Alat**: Google Gemini / Antigravity
+- **Bagian yang dibantu**:
+  - Mengimplementasikan pengembalian pembayaran terlambat (`kembalikanTerlambat()`) pada `LayananPembayaran` dengan status `StatusPembayaran::Dikembalikan`, membukukan dana masuk ke escrow lalu keluar ke eksternal, dan mencatat jejak audit `pembayaran.dikembalikan` (LP-13).
+  - Mengimplementasikan pintu tunggal `LayananPencairan`: pengajuan pencairan (`ajukan()`) dengan validasi minimal Rp 50.000 (LP-18), penguncian dompet penjual, pemindahan dana ke dompet `penahan` bertransaksi atomik, pencatatan audit `pencairan.diajukan`; serta putusan orang kedua (`setujui()` dan `tolak()`) dengan penegakan pemutus bukan pengaju (403), status belum diputuskan (409), pemindahan saldo `penahan` ke `eksternal` atau kembali ke penjual, dan pencatatan audit `pencairan.disetujui` / `pencairan.ditolak`.
+  - Mendaftarkan izin baru `pencairan.ajukan` (peran Penjual) dan `pencairan.setujui` (peran Keuangan), membuat request validation (`AjukanPencairanRequest`, `TolakPencairanRequest`), resource (`PencairanResource`, `PencairanStafResource`), controller (`PencairanSayaController` dan `PencairanStafController`), rute API di bawah `/api/v1/dompet/pencairan` dan `/api/v1/keuangan/pencairan`, serta mendaftarkan rute ke matriks otorisasi dan daftar idempoten berkunci.
+  - Menambahkan Invarian Keenam buku besar pada `app/Console/Commands/PeriksaBuku.php`: total saldo `dompet:penahan` sama persis dengan total nominal pengajuan pencairan berstatus `menunggu`.
+  - Mengembangkan dua skenario balapan konkurensi: `PencairanGanda` (`pencairan-ganda`) untuk 6 proses pengajuan serentak atas saldo terbatas (tepat 1 berhasil) dan `PutusanGanda` (`putusan-ganda`) untuk 6 proses keputusan serentak atas pengajuan yang sama (tepat 1 keputusan berlaku).
+  - Menyusun rangkaian pengujian fitur pada `tests/Feature/Dompet/PencairanTest.php` (14 pengujian lulus).
+- **Cara verifikasi**:
+  - Menjalankan `./vendor/bin/pint --test` (296 berkas lulus format).
+  - Menjalankan seluruh pengujian `./vendor/bin/pest` di SQLite (471 passed, 2.037 assertions).
+  - Menjalankan seluruh pengujian `./vendor/bin/pest` di MySQL 8 InnoDB `lapak_uji` (471 passed, 2.037 assertions).
+  - Menjalankan `php artisan lapak:balapan pencairan-ganda` di MySQL InnoDB (6/6 proses, 1 sukses, 5 ditolak saldo tidak cukup, status aman).
+  - Menjalankan `php artisan lapak:balapan putusan-ganda` di MySQL InnoDB (6/6 proses, 1 putusan menang, 5 ditolak 409, status aman).
+  - Menjalankan `php artisan lapak:periksa-buku` di MySQL InnoDB (6 invarian seimbang, 0 pelanggaran).
+
