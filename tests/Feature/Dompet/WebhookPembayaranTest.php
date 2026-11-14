@@ -2,9 +2,11 @@
 
 use App\Domain\Pesanan\StatusPesanan;
 use App\Enums\JenisDompet;
+use App\Enums\JenisMutasi;
 use App\Enums\StatusPembayaran;
 use App\Models\Checkout;
 use App\Models\Dompet;
+use App\Models\LogAudit;
 use App\Models\MutasiSaldo;
 use App\Models\Pembayaran;
 use App\Models\Pengguna;
@@ -161,4 +163,42 @@ it('tidak menyediakan pintu apa pun bagi pembeli untuk menandai tagihannya lunas
     // Pembeli yang sah pun tidak dapat memanggil webhook tanpa rahasia gerbang.
     $this->postJson('/api/v1/webhook/pembayaran', ($this->kabar)())->assertUnauthorized();
     expect($this->tagihan->refresh()->status)->toBe(StatusPembayaran::Menunggu);
+});
+
+it('membukukan lalu mengembalikan uang yang tiba setelah tagihan ditutup', function (
+    StatusPembayaran $ditutup,
+) {
+    $this->tagihan->forceFill(['status' => $ditutup])->save();
+    $pesanan = $this->checkout->pesanan()->pluck('status', 'nomor')->all();
+
+    ($this->gerbang)(($this->kabar)())->assertOk()->assertJsonPath('data.hasil', 'dikembalikan');
+
+    $mutasi = MutasiSaldo::query()->orderBy('id')->get();
+
+    // Uangnya masuk lalu keluar lagi: empat baris, semuanya merujuk kode tagihan.
+    expect($this->tagihan->refresh()->status)->toBe(StatusPembayaran::Dikembalikan)
+        ->and($mutasi->pluck('jenis')->unique()->values()->all())
+        ->toBe([JenisMutasi::DanaMasuk, JenisMutasi::Pengembalian])
+        ->and($mutasi)->toHaveCount(4)
+        ->and($mutasi->pluck('rujukan')->unique()->all())->toBe([$this->tagihan->kode]);
+
+    // Pesanannya sudah batal sebelum uang tiba, dan statusnya tidak berubah.
+    expect($this->checkout->pesanan()->pluck('status', 'nomor')->all())->toBe($pesanan);
+
+    $jejak = LogAudit::query()->where('peristiwa', 'pembayaran.dikembalikan')->sole();
+    expect($jejak->sasaran)->toBe("pembayaran:{$this->tagihan->kode}")
+        ->and($jejak->rincian['status_tagihan'])->toBe($ditutup->value);
+})->with([
+    'kedaluwarsa' => [StatusPembayaran::Kedaluwarsa],
+    'dibatalkan oleh pembeli' => [StatusPembayaran::Dibatalkan],
+]);
+
+it('mengembalikan satu kali walau kabar terlambat itu dikirim ulang', function () {
+    $this->tagihan->forceFill(['status' => StatusPembayaran::Kedaluwarsa])->save();
+
+    ($this->gerbang)(($this->kabar)())->assertJsonPath('data.hasil', 'dikembalikan');
+    ($this->gerbang)(($this->kabar)())->assertOk()
+        ->assertJsonPath('data.hasil', 'sudah_dikembalikan');
+
+    expect(MutasiSaldo::count())->toBe(4)->and(LogAudit::query()->count())->toBe(1);
 });
