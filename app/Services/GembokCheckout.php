@@ -28,6 +28,6 @@ final class GembokCheckout
                 ->findOrFail($checkoutId);
 
             return $aksi($checkout);
-        });
+        }, 3);
     }
 }

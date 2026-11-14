@@ -138,7 +138,7 @@ final class BatalLawanKirim extends SkenarioBalapan
             $kembali += $pesanan->status === StatusPesanan::Dibatalkan ? 382_000 : 0;
         }
 
-        $menang = count(array_filter($hasil, fn (string $h) => ! str_contains($h, '409')));
+        $menang = count(array_filter($hasil, fn (string $h) => in_array($h, ['pembeli: batal', 'penjual: kirim'], true)));
         if ($menang !== count($konteks['pesanan'])) {
             $pelanggaran[] = "{$menang} tindakan berhasil untuk "
                 .count($konteks['pesanan']).' pesanan, seharusnya satu per pesanan.';
@@ -156,7 +156,7 @@ final class BatalLawanKirim extends SkenarioBalapan
     {
         $daftarHasil = array_map(fn ($h) => is_array($h) ? ($h['status'] ?? $h['hasil'] ?? '') : (string) $h, $hasil);
         $pelanggaran = $this->periksa($konteks, $daftarHasil);
-        $sukses = count(array_filter($daftarHasil, fn (string $h) => ! str_contains($h, '409')));
+        $sukses = count(array_filter($daftarHasil, fn (string $h) => in_array($h, ['pembeli: batal', 'penjual: kirim'], true)));
         $gagal = count($daftarHasil) - $sukses;
 
         return [
@@ -168,6 +168,7 @@ final class BatalLawanKirim extends SkenarioBalapan
                 : 'GAGAL: Terdeteksi pelanggaran: '.implode('; ', $pelanggaran),
             'rincian' => [
                 'pelanggaran' => $pelanggaran,
+                'hasil_pembalap' => $daftarHasil,
             ],
         ];
     }

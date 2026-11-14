@@ -116,7 +116,7 @@ final class Balapan extends Command
 
         $hasilPool = Process::concurrently(function ($pool) use ($perintahList) {
             foreach ($perintahList as $kunci => $cmd) {
-                $pool->as($kunci)->command($cmd);
+                $pool->as($kunci)->path(base_path())->command($cmd);
             }
         });
 
@@ -249,6 +249,18 @@ final class Balapan extends Command
                 } else {
                     $this->line("  - {$k}: ".(is_bool($v) ? ($v ? 'true' : 'false') : $v));
                 }
+            }
+        }
+
+        $adaGalat = false;
+        foreach ($hasilPembalap as $idx => $hp) {
+            if (is_array($hp) && ($hp['status'] ?? '') === 'error') {
+                if (! $adaGalat) {
+                    $this->line('');
+                    $this->warn('Galat Pembalap:');
+                    $adaGalat = true;
+                }
+                $this->line("  - Pembalap {$idx}: ".($hp['raw'] ?? 'unknown'));
             }
         }
     }
