@@ -36,7 +36,7 @@ Route::middleware(['auth:sesi', 'izin:pesanan.buat'])->group(function (): void {
     // izin lebih dulu, lalu dijawab 404 oleh kueri berlingkup, sama seperti nomor orang lain.
     Route::get('pesanan/{nomor}', [PesananSayaController::class, 'show'])->name('pesanan.show');
 
-    // Tiga pintu ini mengembalikan stok atau memindahkan uang: wajib Idempotency-Key (LP-11),
+    // Tiga pintu ini mengembalikan stok atau memindahkan uang: mendukung Idempotency-Key (LP-11),
     // dengan batas laju yang sama seperti checkout.
     Route::middleware(['throttle:transaksi', 'idempoten'])->group(function (): void {
         Route::post('pesanan/{nomor}/terima', [PesananSayaController::class, 'terima'])

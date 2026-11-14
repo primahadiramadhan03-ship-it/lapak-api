@@ -24,7 +24,7 @@ final class PenyelesaianOtomatis
     /** @return int jumlah pesanan yang diselesaikan */
     public function jalankan(): int
     {
-        $batas = now()->subDays((int) (config('lapak.tahan_dana_hari') ?? config('lapak.lama_tahan_hari', 3)));
+        $batas = now()->subDays((int) config('lapak.lama_tahan_hari', 3));
         $selesai = 0;
 
         $kandidat = Pesanan::query()
