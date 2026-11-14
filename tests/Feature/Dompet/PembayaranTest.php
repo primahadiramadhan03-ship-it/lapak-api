@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\StatusPembayaran;
-use App\Exceptions\GalatDomain;
 use App\Http\Resources\PembayaranResource;
 use App\Models\Checkout;
 use App\Models\Pembayaran;
