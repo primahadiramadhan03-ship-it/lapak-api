@@ -206,3 +206,22 @@ it('menolak kode pencairan yang tidak ditemukan', function () {
     $this->sebagai($this->staf, segar: true);
     ($this->kirim)('keuangan/pencairan/CAIR-TIDAK-ADA/setujui')->assertNotFound();
 });
+
+it('memastikan invarian keenam buku besar terjaga selama siklus pencairan (LP-16)', function () {
+    $this->artisan('lapak:periksa-buku')->assertSuccessful();
+
+    $this->sebagai($this->sri, segar: true);
+    $respon = ($this->ajukan)(100_000)->assertCreated();
+
+    $kode = $respon->json('data.kode');
+
+    // Invarian keenam terpenuhi saat menunggu
+    $this->artisan('lapak:periksa-buku')->assertSuccessful();
+
+    // Setujui pencairan
+    $this->sebagai($this->staf, segar: true);
+    ($this->kirim)("keuangan/pencairan/{$kode}/setujui")->assertOk();
+
+    // Invarian keenam tetap terpenuhi setelah disetujui
+    $this->artisan('lapak:periksa-buku')->assertSuccessful();
+});

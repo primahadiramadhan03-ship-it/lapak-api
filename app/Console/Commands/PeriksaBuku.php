@@ -6,8 +6,10 @@ namespace App\Console\Commands;
 
 use App\Domain\Pesanan\StatusPesanan;
 use App\Enums\JenisDompet;
+use App\Enums\StatusPencairan;
 use App\Models\Dompet;
 use App\Models\MutasiSaldo;
+use App\Models\Pencairan;
 use App\Models\Pesanan;
 use App\Services\BukuBesar;
 use Illuminate\Console\Command;
@@ -16,7 +18,7 @@ final class PeriksaBuku extends Command
 {
     protected $signature = 'lapak:periksa-buku';
 
-    protected $description = 'Memeriksa lima invarian buku besar; kode keluar 1 bila dilanggar.';
+    protected $description = 'Memeriksa enam invarian buku besar; kode keluar 1 bila dilanggar.';
 
     public function handle(BukuBesar $bukuBesar): int
     {
@@ -68,6 +70,18 @@ final class PeriksaBuku extends Command
 
         if ($escrow !== $ditahan) {
             $pelanggaran[] = "Saldo escrow {$escrow}, tetapi dana pesanan yang ditahan {$ditahan}.";
+        }
+
+        // 6. Dana yang ditahan untuk pencairan sama dengan pengajuan pencairan yang berstatus menunggu (LP-16).
+        $menungguPencairan = (int) Pencairan::query()
+            ->where('status', StatusPencairan::Menunggu)
+            ->sum('jumlah_rupiah');
+        $penahan = (int) Dompet::query()
+            ->where('kode', JenisDompet::Penahan->value)
+            ->value('saldo_rupiah');
+
+        if ($penahan !== $menungguPencairan) {
+            $pelanggaran[] = "Saldo penahan {$penahan}, tetapi dana pencairan yang menunggu {$menungguPencairan}.";
         }
 
         $this->table(['Dompet', 'Jenis', 'Saldo (Rp)'], $baris);
