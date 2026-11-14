@@ -57,6 +57,8 @@ describe('Matriks Otorisasi', function () {
                 'toko.moderasi',
                 'peran.kelola',
                 'buku-besar.lihat',
+                'pencairan.ajukan',
+                'pencairan.setujui',
             ]);
     });
 
@@ -69,11 +71,13 @@ describe('Matriks Otorisasi', function () {
             NamaIzin::ProdukKelola,
             NamaIzin::PesananProses,
             NamaIzin::DompetLihat,
+            NamaIzin::PencairanAjukan,
         )->and(NamaPeran::Admin->izinBawaan())->toContain(
             NamaIzin::TokoModerasi,
             NamaIzin::PeranKelola,
         )->and(NamaPeran::Keuangan->izinBawaan())->toContain(
             NamaIzin::BukuBesarLihat,
+            NamaIzin::PencairanSetujui,
         )->and(NamaPeran::Auditor->izinBawaan())->toContain(
             NamaIzin::BukuBesarLihat,
         );
@@ -128,6 +132,7 @@ describe('Matriks Otorisasi', function () {
             NamaIzin::TokoModerasi->value,
             NamaIzin::PeranKelola->value,
             NamaIzin::BukuBesarLihat->value,
+            NamaIzin::PencairanSetujui->value,
         ]);
     });
 
