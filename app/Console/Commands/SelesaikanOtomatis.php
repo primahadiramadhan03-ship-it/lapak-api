@@ -22,4 +22,3 @@ final class SelesaikanOtomatis extends Command
         return self::SUCCESS;
     }
 }
-

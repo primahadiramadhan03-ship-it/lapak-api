@@ -88,4 +88,3 @@ it('melewati pesanan yang baru saja dikonfirmasi pembelinya', function () {
         ->and(($this->saldoSri)())->toBe(363_500)
         ->and(LogAudit::query()->where('peristiwa', 'dana.dilepas')->count())->toBe(1);
 });
-

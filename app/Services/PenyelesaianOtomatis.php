@@ -54,4 +54,3 @@ final class PenyelesaianOtomatis
         return true;
     }
 }
-
