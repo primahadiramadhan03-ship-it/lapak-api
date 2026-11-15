@@ -5,15 +5,15 @@
 | PR | Unggahan | Cabang | Penulis | Isi / Pekerjaan | Peninjau | Menunggu | Status |
 |---|---|---|---|---|---|---|---|
 | #47 | Pembuka | `sesi-5/pembuka-sekar` | Sekar (Jaya) | Papan sesi, daftar periksa rilis, dua anak tangga kunci, penataan dua berkas bersama | Bambang (Prima), Bagas (Syafiq) | - | Merged |
-| #48 | A1 | `sesi-5/kontrak-audit-sekar` | Sekar (Jaya) | Tabel log audit dan kepala rantai, daftar peristiwa, rantai hash, PencatatAudit versi kontrak | Bambang (Prima), Bagas (Syafiq) | #47 | Belum |
-| #49 | A2 | `sesi-5/kontrak-dana-dimas` | Dimas (Risa) | Tabel pencairan, dompet penahan, LayananDana, tagihan dapat dibatalkan | Sekar (Jaya), Bambang (Prima) | #47 | Belum |
-| #50 | A3 | `sesi-5/kontrak-pesanan-rani` | Rani (Brili) | Cap waktu proses, LayananPesanan, pendukung uji | Dimas (Risa), Sekar (Jaya) | #48, #49 | Belum |
-| #51 | B1 | `sesi-5/jejak-identitas-bambang` | Bambang (Prima) | Kunci lama terdeteksi; jejak masuk, keluar, dan peran | Bagas (Syafiq), Rani (Brili) | #50 | Belum |
-| #52 | B2 | `sesi-5/pesanan-toko-bagas` | Bagas (Syafiq) | Izin `pesanan.proses`, lima rute pesanan toko, jejak moderasi | Rani (Brili), Dimas (Risa) | #50 | Belum |
-| #53 | B3 | `sesi-5/tindakan-pembeli-rani` | Rani (Brili) | Terima, batal, batal checkout, penyelesaian otomatis, dua skenario | Dimas (Risa), Sekar (Jaya) | #50 | Belum |
-| #54 | B4 | `sesi-5/pencairan-dimas` | Dimas (Risa) | Pembayaran terlambat, pencairan, invarian keenam, dua skenario | Sekar (Jaya), Bambang (Prima) | #50 | Belum |
-| #55 | B5 | `sesi-5/rantai-audit-sekar` | Sekar (Jaya) | Kunci kepala rantai, verifikasi, pintu auditor, pangkas idempotensi, CI | Bambang (Prima), Bagas (Syafiq) | #51–#54 | Belum |
-| #56 | Rilis | `sesi-5/rilis-sekar` | Sekar (Jaya) | Uji penutup, versi 1.0.0, README, papan sesi, tempat penegakan aturan | Bambang (Prima), Bagas (Syafiq) | Temuan kandidat | Belum |
+| #48 | A1 | `sesi-5/kontrak-audit-sekar` | Sekar (Jaya) | Tabel log audit dan kepala rantai, daftar peristiwa, rantai hash, PencatatAudit versi kontrak | Bambang (Prima), Bagas (Syafiq) | #47 | Merged |
+| #49 | A2 | `sesi-5/kontrak-dana-dimas` | Dimas (Risa) | Tabel pencairan, dompet penahan, LayananDana, tagihan dapat dibatalkan | Sekar (Jaya), Bambang (Prima) | #47 | Merged |
+| #50 | A3 | `sesi-5/kontrak-pesanan-rani` | Rani (Brili) | Cap waktu proses, LayananPesanan, pendukung uji | Dimas (Risa), Sekar (Jaya) | #48, #49 | Merged |
+| #51 | B1 | `sesi-5/jejak-identitas-bambang` | Bambang (Prima) | Kunci lama terdeteksi; jejak masuk, keluar, dan peran | Bagas (Syafiq), Rani (Brili) | #50 | Merged |
+| #52 | B2 | `sesi-5/pesanan-toko-bagas` | Bagas (Syafiq) | Izin `pesanan.proses`, lima rute pesanan toko, jejak moderasi | Rani (Brili), Dimas (Risa) | #50 | Merged |
+| #53 | B3 | `sesi-5/tindakan-pembeli-rani` | Rani (Brili) | Terima, batal, batal checkout, penyelesaian otomatis, dua skenario | Dimas (Risa), Sekar (Jaya) | #50 | Merged |
+| #54 | B4 | `sesi-5/pencairan-dimas` | Dimas (Risa) | Pembayaran terlambat, pencairan, invarian keenam, dua skenario | Sekar (Jaya), Bambang (Prima) | #50 | Merged |
+| #55 | B5 | `sesi-5/rantai-audit-sekar` | Sekar (Jaya) | Kunci kepala rantai, verifikasi, pintu auditor, pangkas idempotensi, CI | Bambang (Prima), Bagas (Syafiq) | #51–#54 | Merged |
+| #56 | Rilis | `sesi-5/rilis-sekar` | Sekar (Jaya) | Uji penutup, versi 1.0.0, README, papan sesi, tempat penegakan aturan | Bambang (Prima), Bagas (Syafiq) | Temuan kandidat | Draf |
 | #57 | P1 | `sesi-5/jejak-stok-bagas` | Bagas (Syafiq) | Penyesuaian stok berjejak: temuan kandidat pertama | Rani (Brili), Dimas (Risa) | Temuan #56 | Belum |
 | #58 | Catatan | `sesi-5/catatan-perubahan-bambang` | Bambang (Prima) | `CHANGELOG.md` | Bagas (Syafiq), Rani (Brili) | #56 | Belum |
 

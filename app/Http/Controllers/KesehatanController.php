@@ -29,6 +29,7 @@ class KesehatanController extends Controller
         return $this->sukses([
             'status' => 'sehat',
             'basis_data' => 'terhubung',
+            'versi' => config('lapak.versi'),
         ]);
     }
 }

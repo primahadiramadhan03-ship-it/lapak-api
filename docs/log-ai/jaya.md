@@ -82,3 +82,18 @@
   - `php artisan migrate:fresh --seed --force` lalu `php artisan lapak:balapan --semua` di MySQL: seluruh 17 skenario LULUS.
   - `php artisan lapak:periksa-buku` (62 mutasi, 0 pelanggaran) dan `php artisan lapak:verifikasi-audit` (38 baris, UTUH) setelah balapan.
 
+## Sesi 5 — PR #56 Rilis Sekar (Integrator Utama)
+
+**Bagian yang dibantu**:
+  - Menyusun uji penutup arsitektur rilis `tests/Feature/Sistem/PeristiwaTerpakaiTest.php`: memastikan versi bernomor 1.0.0 pada `config/lapak.php` dan memastikan seluruh 20 kasus enum `PeristiwaAudit` tidak ada yang menganggur di `app/`.
+  - Menjalankan uji penutup untuk mendeteksi temuan kandidat rilis: `PeristiwaAudit::StokDisesuaikan` belum tercatat pada `ProdukSayaController@stok` (didelegasikan ke PR #57 milik Bagas/Syafiq).
+  - Menetapkan versi `1.0.0` pada `config/lapak.php`.
+  - Memperbarui `README.md` dengan panduan instalasi bersih, upgrade dari Sesi 4, eksekusi test, dan verifikasi buku besar serta audit log.
+  - Menambahkan aturan bisnis LP-18 (Escrow & Pencairan) dan LP-19 (Rantai Log Audit) pada `docs/ATURAN-BISNIS.md`.
+  - Memperbarui papan integrasi PR di `docs/sesi/SESI-5.md`.
+
+**Cara memverifikasi hasil**:
+  - `./vendor/bin/pint --test`: lulus 100% tanpa pelanggaran gaya kode.
+  - `./vendor/bin/pest tests/Feature/Sistem/PeristiwaTerpakaiTest.php`: asersi versi lulus, asersi peristiwa menganggur gagal pada `stok.disesuaikan` (menjadi pemicu resmi untuk PR #57).
+
+
