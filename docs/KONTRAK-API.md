@@ -134,10 +134,10 @@ berurutan pada rute yang tidak terbuka untuk publik.
 | Peran | Izin bawaan |
 |---|---|
 | `pembeli` | `keranjang.kelola`, `toko.buka`, `pesanan.buat` |
-| `penjual` | `produk.kelola`, `dompet.lihat` |
+| `penjual` | `produk.kelola`, `pesanan.proses`, `dompet.lihat`, `pencairan.ajukan` |
 | `admin` | `toko.moderasi`, `peran.kelola` |
-| `keuangan` | `buku-besar.lihat` |
-| `auditor` | `buku-besar.lihat` |
+| `keuangan` | `buku-besar.lihat`, `pencairan.setujui` |
+| `auditor` | `buku-besar.lihat`, `audit.lihat` |
 
 Nilai `*` berarti semua pengguna yang sudah masuk, bukan pengunjung tanpa sesi.
 
@@ -243,7 +243,27 @@ sambungan apa pun, maka panjang rantai dicatat di kepala dan ikut dibandingkan s
 | Kepala rantai tidak ada | `LogicException`, jalankan migrasi |
 | Baris diubah atau dihapus lewat model | `LogicException`, baris tetap seperti semula |
 
-Log audit tidak pernah tampil pada API publik. Pembacaannya disediakan bagi auditor pada rilis 1.0.0.
+Log audit tidak pernah tampil pada API publik. Ia dibaca auditor melalui dua rute hanya-baca di
+bawah ini, keduanya di belakang izin `audit.lihat` dan sesi segar.
+
+### Pintu baca auditor
+
+| Rute | Keterangan |
+| --- | --- |
+| `GET /audit/log` | Jejak terbaru lebih dulu; dapat disaring `peristiwa`, `sasaran`, `pelaku`, dan `per_halaman`. `meta` memuat `jumlah_menurut_kepala` dan `kepala_rantai`. |
+| `GET /audit/log/{id}` | Satu baris. Kolom `tertaut` berisi hasil hitung ulang hash saat dibaca: `false` berarti isi baris tidak lagi cocok dengan rantainya. |
+
+Tidak ada rute tulis. Satu-satunya penulis tabel ini tetap `PencatatAudit::catat()`.
+
+Keutuhan rantai diperiksa dengan:
+
+```bash
+php artisan lapak:verifikasi-audit
+```
+
+Perintah itu menghitung ulang seluruh hash, membandingkan setiap `hash_sebelumnya` dengan `hash`
+baris sebelumnya, dan mencocokkan kepala rantai dengan isi tabel. Kode keluar 1 bila ada
+pelanggaran. Perintah yang sama dijalankan pada kedua tugas CI dan dijadwalkan setiap hari.
 
 ---
 

@@ -130,7 +130,10 @@
 /app/Services/LayananPencairan.php @risayulia
 /app/Models/Pencairan.php @risayulia
 /app/Services/PencatatAudit.php @Sultanil
-/app/Services/PemeriksaRantaiAudit.php @Sultanil
+/app/Console/Commands/VerifikasiAudit.php @Sultanil
+/app/Console/Commands/PangkasIdempotensi.php @Sultanil
+/app/Http/Controllers/AuditLogController.php @Sultanil
+/app/Http/Resources/LogAuditResource.php @Sultanil
 /app/Models/LogAudit.php @Sultanil
 /app/Enums/PeristiwaAudit.php @Sultanil
 /docs/RILIS.md @Sultanil
