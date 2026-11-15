@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusPencairan;
 use App\Http\Requests\TolakPencairanRequest;
 use App\Http\Resources\PencairanStafResource;
 use App\Models\Pencairan;
@@ -11,6 +12,7 @@ use App\Services\LayananPencairan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 final class PencairanStafController extends Controller
 {
@@ -19,11 +21,17 @@ final class PencairanStafController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $data = $request->validate([
+            'status' => ['nullable', 'string', Rule::enum(StatusPencairan::class)],
+        ]);
+
+        $status = $data['status'] ?? null;
+
         $halaman = Pencairan::query()
             ->with(['pengaju', 'pemutus'])
             ->when(
-                $request->query('status'),
-                fn (Builder $kueri, string $status) => $kueri->where('status', $status),
+                $status !== null,
+                fn (Builder $kueri) => $kueri->where('status', $status),
             )
             ->latest('id')
             ->paginate(config('lapak.katalog.per_halaman_bawaan', 12));

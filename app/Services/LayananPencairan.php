@@ -37,7 +37,7 @@ final class LayananPencairan
 
     public function ajukan(Pengguna $penjual, Uang $jumlah, string $rekeningTujuan): Pencairan
     {
-        $minimum = Uang::dari(config('lapak.pencairan_minimum_rupiah', 50_000));
+        $minimum = Uang::dari((int) config('lapak.minimal_pencairan', 50_000));
 
         if ($jumlah->rupiah < $minimum->rupiah) {
             throw new GalatDomain('LP-16', "Pencairan minimal {$minimum->format()}.", 422);

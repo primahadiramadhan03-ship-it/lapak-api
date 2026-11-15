@@ -38,7 +38,7 @@ Route::middleware(['auth:sesi', 'izin:pencairan.setujui', 'sesi.segar'])
     ->group(function (): void {
         Route::get('/', [PencairanStafController::class, 'index'])->name('index');
 
-        Route::middleware('idempoten')->group(function (): void {
+        Route::middleware(['throttle:transaksi', 'idempoten'])->group(function (): void {
             Route::post('{kode}/setujui', [PencairanStafController::class, 'setujui'])
                 ->name('setujui');
             Route::post('{kode}/tolak', [PencairanStafController::class, 'tolak'])->name('tolak');

@@ -140,6 +140,12 @@ it('staf keuangan dapat melihat daftar pengajuan pencairan dan menyaring berdasa
         ->assertJsonCount(1, 'data');
 });
 
+it('menolak penyaringan status pencairan dengan nilai tidak sah', function () {
+    $this->sebagai($this->staf, segar: true)
+        ->getJson('/api/v1/keuangan/pencairan?status=tidak_valid')
+        ->assertUnprocessable();
+});
+
 it('melarang pengaju memutuskan pencairannya sendiri (LP-16)', function () {
     // Bu Sri diangkat menjadi staf keuangan. Izinnya ada; aturannya tetap melarang.
     $sri = Pengguna::factory()->penjual()->keuangan()->create();
