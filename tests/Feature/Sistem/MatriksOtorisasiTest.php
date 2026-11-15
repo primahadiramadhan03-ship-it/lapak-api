@@ -59,6 +59,7 @@ describe('Matriks Otorisasi', function () {
                 'buku-besar.lihat',
                 'pencairan.ajukan',
                 'pencairan.setujui',
+                'audit.lihat',
             ]);
     });
 
@@ -80,6 +81,7 @@ describe('Matriks Otorisasi', function () {
             NamaIzin::PencairanSetujui,
         )->and(NamaPeran::Auditor->izinBawaan())->toContain(
             NamaIzin::BukuBesarLihat,
+            NamaIzin::AuditLihat,
         );
     });
 
@@ -133,6 +135,7 @@ describe('Matriks Otorisasi', function () {
             NamaIzin::PeranKelola->value,
             NamaIzin::BukuBesarLihat->value,
             NamaIzin::PencairanSetujui->value,
+            NamaIzin::AuditLihat->value,
         ]);
     });
 
@@ -155,7 +158,7 @@ describe('Matriks Otorisasi', function () {
             ->and($posisiIzin)->toBeLessThan($posisiBinding);
     });
 
-    it('menyediakan empat berkas matriks domain', function () {
+    it('menyediakan lima berkas matriks domain', function () {
         $berkas = array_map(
             static fn (string $path): string => basename($path),
             glob(__DIR__.'/matriks/*.php') ?: [],
@@ -166,6 +169,7 @@ describe('Matriks Otorisasi', function () {
             'katalog.php',
             'belanja.php',
             'dompet.php',
+            'audit.php',
         ]);
     });
     it('mengisi matriks awal dengan wildcard pada rute yang terdaftar', function () {
