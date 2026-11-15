@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'versi' => env('LAPAK_VERSI', '1.0.0'),
     'komisi' => (float) env('LAPAK_KOMISI', 0.05),
     'komisi_persen' => (int) env('LAPAK_KOMISI_PERSEN', 5),
     'batas_waktu_bayar_menit' => env('LAPAK_BATAS_WAKTU_BAYAR_MENIT', 15),

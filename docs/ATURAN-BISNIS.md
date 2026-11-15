@@ -21,3 +21,5 @@ Berikut adalah aturan bisnis berkode yang dirujuk dari kode, pesan galat, kasus 
 | LP-15 | Tindakan peka menuntut konfirmasi ulang kata sandi (sesi segar 10 menit) atau checkout bernilai besar. | `SesiSegar`, `SesiController::konfirmasi`, `BukuBesarController`, `CheckoutController` |
 | LP-16 | Berkas bersama (rute, seeder, bootstrap) harus ditinjau sesuai CODEOWNERS. | `.github/CODEOWNERS` |
 | LP-17 | Log AI wajib diisi setiap anggota atau ditulis "tidak memakai AI pada sesi ini". | `docs/log-ai/` |
+| LP-18 | Dana keluar dari escrow hanya lewat LayananDana; pencairan saldo penjual berpenahan minimal Rp 50.000 dengan putusan orang kedua (pengaju bukan penyetuju). | `LayananDana`, `LayananPencairan`, `PencairanController`, `PencairanTest`, `Balapan/PencairanGanda` |
+| LP-19 | Log audit berantai hash (append-only); hanya PencatatAudit yang menulis log_audit dan setiap baris memuat hash baris sebelumnya. | `PencatatAudit`, `PemeriksaRantaiAudit`, `VerifikasiAuditCommand`, `HanyaPencatatAuditTest`, `VerifikasiAuditTest` |
