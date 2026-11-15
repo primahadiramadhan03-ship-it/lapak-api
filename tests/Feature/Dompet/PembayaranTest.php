@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\StatusPembayaran;
-use App\Exceptions\GalatDomain;
 use App\Http\Resources\PembayaranResource;
 use App\Models\Checkout;
 use App\Models\Pembayaran;
@@ -160,15 +159,15 @@ it('tidak menandai dibatalkan bila status pembayaran bukan menunggu', function (
         ->and($pembayaran->refresh()->status)->not->toBe(StatusPembayaran::Dibatalkan);
 })->with(['lunas', 'kedaluwarsa']);
 
-it('menolak webhook pembayaran masuk bila tagihan sudah dibatalkan dengan 409', function () {
+it('mengembalikan pembayaran yang masuk bila tagihan sudah dibatalkan (LP-13)', function () {
     $this->seed(DompetSeeder::class);
 
     $checkout = Checkout::factory()->create(['total_rupiah' => 150_000]);
     $pembayaran = Pembayaran::factory()->dibatalkan()->for($checkout)->create(['jumlah_rupiah' => 150_000]);
 
-    expect(fn () => $this->layanan->terima($pembayaran->kode, 150_000, 'evt_batal_01'))
-        ->toThrow(GalatDomain::class, 'Tagihan ini sudah dibatalkan.');
+    $hasil = $this->layanan->terima($pembayaran->kode, 150_000, 'evt_batal_01');
 
-    expect($pembayaran->refresh()->status)->toBe(StatusPembayaran::Dibatalkan)
+    expect($hasil)->toBe('dikembalikan')
+        ->and($pembayaran->refresh()->status)->toBe(StatusPembayaran::Dikembalikan)
         ->and($pembayaran->lunas_pada)->toBeNull();
 });
