@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\PeristiwaAudit;
 use App\Models\KunciIdempotensi;
+use App\Models\LogAudit;
 use App\Models\Pengguna;
 use App\Models\Produk;
 use App\Models\Toko;
@@ -99,4 +101,21 @@ it('tidak lagi menerima stok mutlak lewat PATCH produk', function () {
     $this->patchJson($alamat, ['nama' => 'Kain Batik Tulis'])
         ->assertOk()
         ->assertJsonPath('data.stok', 10);
+});
+
+it('mencatat penyesuaian stok pada log audit (LP-17)', function () {
+    $this->sebagai($this->sri);
+
+    ($this->sesuaikan)(5)->assertOk();
+
+    $log = LogAudit::query()->where('peristiwa', PeristiwaAudit::StokDisesuaikan->value)->latest('id')->first();
+    expect($log)->not->toBeNull()
+        ->and($log->pelaku_id)->toBe($this->sri->id)
+        ->and($log->sasaran)->toBe("produk:{$this->kain->id}")
+        ->and($log->rincian)->toMatchArray([
+            'toko_id' => $this->tokoSri->id,
+            'selisih' => 5,
+            'stok_sebelum' => 10,
+            'stok_sesudah' => 15,
+        ]);
 });

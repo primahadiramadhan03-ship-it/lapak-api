@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\PeristiwaAudit;
 use App\Enums\StatusProduk;
 use App\Http\Requests\PenyesuaianStokRequest;
 use App\Http\Requests\ProdukSayaRequest;
 use App\Http\Resources\ProdukSayaResource;
 use App\Models\Produk;
 use App\Models\Toko;
+use App\Services\PencatatAudit;
 use App\Services\PenjagaStok;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final class ProdukSayaController extends Controller
@@ -70,13 +73,33 @@ final class ProdukSayaController extends Controller
      * Penjual menyebut selisih, bukan angka akhir. Produk tetap dicari melalui toko miliknya,
      * lalu PenjagaStok membaca ulang barisnya di bawah kunci sebelum menghitung.
      */
-    public function stok(PenyesuaianStokRequest $request, PenjagaStok $stok, int $id): JsonResponse
-    {
+    public function stok(
+        PenyesuaianStokRequest $request,
+        PenjagaStok $stok,
+        PencatatAudit $audit,
+        int $id,
+    ): JsonResponse {
         $produk = $this->produkSaya($request, $id);
 
-        return $this->sukses(ProdukSayaResource::make(
-            $stok->sesuaikan($produk->id, $request->integer('selisih')),
-        ));
+        $penyesuaian = DB::transaction(function () use ($request, $stok, $audit, $produk): Produk {
+            $hasil = $stok->sesuaikan($produk->id, $request->integer('selisih'));
+
+            $audit->catat(
+                PeristiwaAudit::StokDisesuaikan,
+                $request->user(),
+                'produk:'.$produk->id,
+                [
+                    'toko_id' => $produk->toko_id,
+                    'selisih' => $request->integer('selisih'),
+                    'stok_sebelum' => $produk->stok,
+                    'stok_sesudah' => $produk->stok + $request->integer('selisih'),
+                ]
+            );
+
+            return $hasil;
+        });
+
+        return $this->sukses(ProdukSayaResource::make($penyesuaian));
     }
 
     private function tokoSaya(Request $request): Toko
