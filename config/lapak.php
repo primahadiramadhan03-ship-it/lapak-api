@@ -8,6 +8,9 @@ return [
     'lama_tahan_hari' => env('LAPAK_LAMA_TAHAN_HARI', 3),
     'minimal_pencairan' => (int) env('LAPAK_MINIMAL_PENCAIRAN', 50000),
 
+    // LP-11: selama masa ini klien masih boleh mengirim ulang permintaan yang sama.
+    'idempotensi_simpan_hari' => (int) env('LAPAK_IDEMPOTENSI_SIMPAN_HARI', 7),
+
     // Gerbang pembayaran (disimulasikan). Rahasia bersama penanda tangan webhook: wajib diisi
     // lewat .env dan tidak pernah di-commit. Bila kosong, seluruh webhook ditolak.
     'gateway' => [

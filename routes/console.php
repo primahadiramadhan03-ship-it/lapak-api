@@ -16,3 +16,10 @@ Schedule::command('lapak:batalkan-kedaluwarsa')->everyTenMinutes()->withoutOverl
 
 // LP-12: pesanan yang dikirim lebih dari masa tahan diselesaikan dan dananya dilepas.
 Schedule::command('lapak:selesaikan-otomatis')->hourly()->withoutOverlapping();
+
+// LP-11: rekaman kunci idempotensi dibuang setelah masa simpannya lewat.
+Schedule::command('lapak:pangkas-idempotensi')->dailyAt('03:45')->withoutOverlapping();
+
+// LP-19: rantai audit diperiksa setiap hari, bukan hanya saat rilis. Rantai yang terputus
+// harus ketahuan dalam hitungan jam, bukan saat auditor membukanya berminggu-minggu kemudian.
+Schedule::command('lapak:verifikasi-audit')->dailyAt('04:10')->withoutOverlapping();

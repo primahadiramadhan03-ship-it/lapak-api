@@ -39,6 +39,14 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: database/database.sqlite
 
+      # LP-19: rantai audit diperiksa pada tugas yang sama, jadi CI SQLite pun menolak log yang
+      # bercabang, bukan hanya tugas MySQL.
+      - name: Rantai audit utuh
+        run: php artisan lapak:verifikasi-audit
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+
   # Tugas kedua, sejak Sesi 4. SQLite tidak mengenal SELECT ... FOR UPDATE dan hanya mengizinkan
   # satu penulis, sehingga meloloskan kode yang salah di bawah beban. Tugas ini mengulang seluruh
   # pengujian pada MySQL, lalu melepas proses serentak sungguhan lewat lapak:balapan.
@@ -94,3 +102,7 @@ jobs:
 
       - name: Buku besar seimbang setelah balapan
         run: php artisan lapak:periksa-buku
+
+      # LP-19: setelah seluruh transaksi dan balapan, rantai audit harus tetap satu jalur.
+      - name: Rantai audit utuh setelah balapan
+        run: php artisan lapak:verifikasi-audit

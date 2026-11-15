@@ -62,3 +62,23 @@
   - Menjalankan `php artisan lapak:balapan --daftar` dan memastikan kelima skenario terdaftar.
   - Menjalankan `./vendor/bin/pest` untuk memastikan pengujian lokal tetap hijau.
 
+## Sesi 5 — B5 Rantai Audit, Pintu Auditor, dan Pangkas Idempotensi
+
+**Bagian yang dibantu**:
+  - Menyusun `App\Domain\Audit\PemeriksaRantaiAudit`: membaca `log_audit` berurutan, menghitung ulang setiap hash, memeriksa sambungan `hash_sebelumnya`, dan mencocokkan kepala rantai beserta jumlah barisnya. Pemeriksa hanya membaca; ia tidak pernah memperbaiki apa pun.
+  - Menyusun perintah `lapak:verifikasi-audit` (`--rinci`) yang memakai pemeriksa tersebut, mencetak ringkasan, dan memberi kode keluar 1 bila rantai rusak.
+  - Menyusun skenario balapan `AuditSerempak` (enam proses mencatat serentak) untuk membuktikan kepala rantai memang harus dikunci sebelum disambung. Skenario ditulis lebih dulu, dijalankan terhadap versi tanpa `lockForUpdate` sampai terlihat melanggar, lalu dijalankan lagi terhadap versi kontrak sampai LULUS.
+  - Menambahkan izin `audit.lihat` untuk peran auditor, dua rute baca `GET /audit/log` dan `GET /audit/log/{id}`, `AuditLogController`, serta `LogAuditResource` dengan kolom `tertaut` hasil hitung ulang hash.
+  - Menambahkan uji yang merusak log lewat `DB::table` (mengubah isi, menghapus baris tengah, menggeser kepala, memalsukan jumlah, menyisipkan baris palsu) dan uji arsitektur bahwa hanya `PencatatAudit` yang menulis `log_audit`.
+  - Menambahkan `lapak:pangkas-idempotensi` beserta kunci `idempotensi_simpan_hari`, jadwal harian untuk pangkas idempotensi dan verifikasi audit, serta langkah `lapak:verifikasi-audit` pada kedua tugas CI.
+  - Memperbarui `docs/KONTRAK-API.md` (tabel izin per peran dan pintu baca auditor) serta menambah `tests/Feature/Sistem/matriks/audit.php`.
+
+**Cara memverifikasi hasil**:
+  - `./vendor/bin/pint --test`: lulus, 314 berkas.
+  - `./vendor/bin/pest` pada SQLite: 509 lulus (2181 asersi).
+  - `DB_CONNECTION=mysql DB_DATABASE=lapak_uji ./vendor/bin/pest`: 509 lulus.
+  - `php artisan lapak:balapan audit-serempak` tanpa `lockForUpdate` pada kepala rantai: GAGAL (lima dari enam berhasil pada percobaan terakhir, kepala tertinggal satu baris, dan pelanggaran unik `hash_sebelumnya`), membuktikan skenario menangkap balapan.
+  - `php artisan lapak:balapan audit-serempak` pada versi kontrak: LULUS 6/6, rantai satu jalur, kepala bertambah tepat 6.
+  - `php artisan migrate:fresh --seed --force` lalu `php artisan lapak:balapan --semua` di MySQL: seluruh 17 skenario LULUS.
+  - `php artisan lapak:periksa-buku` (62 mutasi, 0 pelanggaran) dan `php artisan lapak:verifikasi-audit` (38 baris, UTUH) setelah balapan.
+
